@@ -20,6 +20,7 @@ export interface IntrospectionResult {
   name?: string
   description: string
   serializer: Serializer
+  pathFilter?: string
   procedures: EndpointInfo[]
   [key: string]: unknown
 }

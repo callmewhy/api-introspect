@@ -87,6 +87,7 @@ export function createIntrospectionRouter(
       ...meta,
       description: generateDescription(serializer, filtered, path),
       serializer,
+      pathFilter: ns,
       procedures: filtered,
     }
     // Dotted key e.g. '_introspect.user' maps to URL /_introspect/user
