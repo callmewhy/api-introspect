@@ -6,7 +6,7 @@ import { addIntrospectionEndpoint, createIntrospectionRouter, withIntrospection 
 import { getResolver, mockProcedure, mockRouter, mockT } from './helpers'
 
 describe('createIntrospectionRouter', () => {
-  it('creates a router with _introspect and _introspect.skill.md procedures', () => {
+  it('creates a router with _introspect and _introspect/skill.md procedures', () => {
     const appRouter = mockRouter({
       'user.list': mockProcedure({
         type: 'query',
@@ -17,7 +17,7 @@ describe('createIntrospectionRouter', () => {
     const result = createIntrospectionRouter(mockT(), appRouter)
 
     expect(result._def.procedures).toHaveProperty('_introspect')
-    expect(result._def.procedures).toHaveProperty('_introspect.skill.md')
+    expect(result._def.procedures).toHaveProperty('_introspect/skill.md')
 
     const endpoints = getResolver(result, '_introspect')() as Array<{ path: string; output?: Record<string, unknown> }>
     expect(endpoints).toHaveLength(1)
@@ -26,7 +26,7 @@ describe('createIntrospectionRouter', () => {
     )
     expect((endpoints[0]?.output?.items as { type: string }).type).toBe('string')
 
-    const skillText = getResolver(result, '_introspect.skill.md')() as string
+    const skillText = getResolver(result, '_introspect/skill.md')() as string
     expect(skillText).toContain('tRPC API Interaction Skill')
     expect(skillText).toContain('plain JSON')
   })
@@ -35,7 +35,7 @@ describe('createIntrospectionRouter', () => {
     const result = createIntrospectionRouter(mockT(), mockRouter({}), { path: 'schema' })
 
     expect(result._def.procedures).toHaveProperty('schema')
-    expect(result._def.procedures).toHaveProperty('schema.skill.md')
+    expect(result._def.procedures).toHaveProperty('schema/skill.md')
     expect(result._def.procedures).not.toHaveProperty('_introspect')
   })
 
@@ -107,7 +107,7 @@ describe('withIntrospection', () => {
 
     expect(result._def.procedures).toHaveProperty('user.list')
     expect(result._def.procedures).toHaveProperty('_introspect')
-    expect(result._def.procedures).toHaveProperty('_introspect.skill.md')
+    expect(result._def.procedures).toHaveProperty('_introspect/skill.md')
   })
 })
 
@@ -127,7 +127,7 @@ describe('addIntrospectionEndpoint', () => {
     }>
 
     expect(result._def.procedures).toHaveProperty('_introspect')
-    expect(result._def.procedures).toHaveProperty('_introspect.skill.md')
+    expect(result._def.procedures).toHaveProperty('_introspect/skill.md')
     expect(endpoints).toHaveLength(1)
     expect(endpoints[0]?.path).toBe('userList')
     expect((endpoints[0]?.output?.items as { type: string }).type).toBe('string')

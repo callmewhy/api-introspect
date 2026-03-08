@@ -42,7 +42,7 @@ export function createIntrospectionRouter(
 
   return t.router({
     [path]: t.procedure.query(() => endpoints),
-    [`${path}.skill.md`]: t.procedure.query(() => skillText),
+    [`${path}/skill.md`]: t.procedure.query(() => skillText),
   })
 }
 

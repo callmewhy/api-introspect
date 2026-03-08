@@ -7,7 +7,7 @@ import { getResolver, mockRouter, mockT } from './helpers'
 describe('skill endpoint', () => {
   it('returns plain JSON skill text by default', () => {
     const result = createIntrospectionRouter(mockT(), mockRouter({}))
-    const skillText = getResolver(result, '_introspect.skill.md')() as string
+    const skillText = getResolver(result, '_introspect/skill.md')() as string
 
     expect(skillText).toContain('plain JSON')
     expect(skillText).not.toContain('superjson')
@@ -27,7 +27,7 @@ describe('skill endpoint', () => {
     } as unknown as AnyTRPCRouter
 
     const result = createIntrospectionRouter(mockT(), appRouter)
-    const skillText = getResolver(result, '_introspect.skill.md')() as string
+    const skillText = getResolver(result, '_introspect/skill.md')() as string
 
     expect(skillText).toContain('superjson')
     expect(skillText).not.toContain('plain JSON')
@@ -35,7 +35,7 @@ describe('skill endpoint', () => {
 
   it('allows manual serializer override', () => {
     const result = createIntrospectionRouter(mockT(), mockRouter({}), { serializer: 'superjson' })
-    const skillText = getResolver(result, '_introspect.skill.md')() as string
+    const skillText = getResolver(result, '_introspect/skill.md')() as string
 
     expect(skillText).toContain('superjson')
   })

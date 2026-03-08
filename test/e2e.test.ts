@@ -57,7 +57,7 @@ describe('e2e', () => {
     expect(paths).toContain('health.check')
 
     expect(paths).not.toContain('_introspect')
-    expect(paths).not.toContain('_introspect.skill.md')
+    expect(paths).not.toContain('_introspect/skill.md')
   })
 
   it('_introspect returns correct types for each procedure', async () => {
@@ -82,8 +82,8 @@ describe('e2e', () => {
     expect(userCreate?.input?.type).toBe('object')
   })
 
-  it('gET /_introspect.skill.md returns skill text', async () => {
-    const res = await fetch(`${baseUrl}/_introspect.skill.md`)
+  it('gET /_introspect/skill.md returns skill text', async () => {
+    const res = await fetch(`${baseUrl}/_introspect/skill.md`)
     expect(res.ok).toBe(true)
 
     const json = await res.json()
@@ -122,7 +122,7 @@ describe('e2e', () => {
     const input = encodeURIComponent(JSON.stringify({ id: 1 }))
     // user.getById doesn't exist in our test router, but we can verify
     // the introspection data documents the correct encoding format
-    const res = await fetch(`${baseUrl}/_introspect.skill.md`)
+    const res = await fetch(`${baseUrl}/_introspect/skill.md`)
     const json = await res.json()
     const skillText = json.result.data as string
 
