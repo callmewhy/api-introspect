@@ -15,4 +15,5 @@ Release this package: update docs, then publish to npm.
 11. If there are staged or unstaged changes (check via `git status`), create a git commit with the message `release: vX.Y.Z`. If the working tree is clean, skip the commit.
 12. Create a git tag `vX.Y.Z`.
 13. Run `npm publish --access public`. If it fails with EOTP (requires OTP), ask the user for their one-time password and retry with `--otp=<code>`.
-14. Report success with the published version and remind the user to `git push --follow-tags` to push the commit and tag to the remote.
+14. Run `git push --follow-tags` to push the commit and tag to the remote.
+15. Report success with the published version.
