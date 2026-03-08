@@ -29,5 +29,7 @@ export interface IntrospectionRouterOptions<TPath extends string = string> exten
   enabled?: boolean
   path?: TPath
   serializer?: Serializer
-  meta?: Record<string, unknown>
+  meta?: Record<string, unknown> & {
+    description?: string
+  }
 }

@@ -118,6 +118,31 @@ describe('createIntrospectionRouter', () => {
     expect(healthData.procedures[0]?.path).toBe('health.check')
   })
 
+  it('creates prefix sub-routes for nested procedure paths', () => {
+    const t = initTRPC.create()
+    const appRouter = t.router({
+      user: t.router({
+        profile: t.router({
+          get: t.procedure.query(() => ({ id: 1 })),
+        }),
+      }),
+    })
+
+    const result = createIntrospectionRouter(t, appRouter)
+
+    expect(result._def.procedures).toHaveProperty('_introspect.user')
+    expect(result._def.procedures).toHaveProperty('_introspect.user.profile')
+    expect(result._def.procedures).toHaveProperty('_introspect.user.profile.get')
+
+    const profileData = getResolver(result, '_introspect.user.profile')() as IntrospectionResult
+    expect(profileData.pathFilter).toBe('user.profile')
+    expect(profileData.procedures.map(p => p.path)).toEqual(['user.profile.get'])
+
+    const leafData = getResolver(result, '_introspect.user.profile.get')() as IntrospectionResult
+    expect(leafData.pathFilter).toBe('user.profile.get')
+    expect(leafData.procedures.map(p => p.path)).toEqual(['user.profile.get'])
+  })
+
   it('creates multi-level sub-routes for deep path filtering', () => {
     const t = initTRPC.create()
     const appRouter = t.router({

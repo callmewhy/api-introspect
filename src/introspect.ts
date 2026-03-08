@@ -79,7 +79,7 @@ function getProcedureType(type: unknown) {
   return type as TRPCProcedureType
 }
 
-function isExcludedPath(path: string, excludePrefixes: string[]) {
+function isExcludedPath(path: string, excludePrefixes: readonly string[]) {
   return excludePrefixes.some(prefix => path.startsWith(prefix))
 }
 

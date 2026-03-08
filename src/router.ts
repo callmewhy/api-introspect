@@ -17,7 +17,13 @@ function generateDescription(serializer: Serializer, procedures: EndpointInfo[],
 
   const encoding = serializer === 'superjson'
     ? 'SuperJSON (wrap input with {json,meta}, unwrap responses the same way)'
-    : 'standard JSON'
+    : serializer === 'custom'
+      ? 'a custom tRPC transformer (wire format is server-defined)'
+      : 'standard JSON'
+
+  const transportHint = serializer === 'custom'
+    ? 'Queries and mutations use the server\'s custom transformer, so inspect that transformer to encode requests and decode responses.'
+    : 'Queries: GET /<path>?input=<url-encoded-json>. Mutations: POST /<path> with JSON body. Response: {"result":{"data":<value>}}.'
 
   const counts = [
     queries && `${queries} queries`,
@@ -25,10 +31,16 @@ function generateDescription(serializer: Serializer, procedures: EndpointInfo[],
     subs && `${subs} subscriptions`,
   ].filter(Boolean).join(', ')
 
-  const namespaces = [...new Set(procedures.map(p => p.path.split('.')[0]).filter(Boolean))]
-  const nsExample = namespaces.length > 0 ? ` (e.g. /${endpointPath}.${namespaces[0]} to list only ${namespaces[0]} procedures)` : ''
+  const prefixes = [...new Set(procedures.map(p => p.path.split('.')[0]).filter(Boolean))]
+  const prefixExample = prefixes.length > 0 ? ` (e.g. /${endpointPath}.${prefixes[0]} to list only ${prefixes[0]} procedures)` : ''
 
-  return `tRPC API with ${counts || 'no procedures'}. Encoding: ${encoding}. Queries: GET /<path>?input=<url-encoded-json>. Mutations: POST /<path> with JSON body. Response: {"result":{"data":<value>}}. Append .<namespace> to this endpoint to filter by path prefix${nsExample}.`
+  return `tRPC API with ${counts || 'no procedures'}. Encoding: ${encoding}. ${transportHint} Append .<prefix> to this endpoint to filter by path prefix${prefixExample}.`
+}
+
+function mergeDescription(baseDescription: string, extraDescription: unknown) {
+  return typeof extraDescription === 'string' && extraDescription.trim()
+    ? `${baseDescription} ${extraDescription.trim()}`
+    : baseDescription
 }
 
 /**
@@ -51,26 +63,33 @@ export function createIntrospectionRouter(
   appRouter: AnyTRPCRouter,
   options: IntrospectionRouterOptions = {},
 ) {
-  const { enabled = true, path = '_introspect', meta, ...introspectOptions } = options
+  const {
+    enabled = true,
+    path = '_introspect',
+    meta,
+    serializer: serializerOverride,
+    ...introspectOptions
+  } = options
 
   if (!enabled) {
     return t.router({})
   }
 
   const procedures = introspectRouter(appRouter, introspectOptions)
-  const serializer = options.serializer ?? detectSerializer(appRouter._def._config)
-
-  const description = generateDescription(serializer, procedures, path)
+  const serializer = serializerOverride ?? detectSerializer(appRouter._def._config)
 
   const result: IntrospectionResult = {
     ...meta,
-    description,
+    description: mergeDescription(
+      generateDescription(serializer, procedures, path),
+      meta?.description,
+    ),
     serializer,
     procedures,
   }
 
-  // Build sub-routes for every path prefix so multi-level filtering works
-  // e.g. /_introspect.user, /_introspect.user.list, /_introspect.health.check
+  // Build sub-routes for every path prefix so multi-level filtering works.
+  // e.g. /_introspect.user, /_introspect.user.profile, /_introspect.user.profile.get
   const prefixes = new Set<string>()
   for (const p of procedures) {
     const parts = p.path.split('.')
@@ -86,14 +105,17 @@ export function createIntrospectionRouter(
 
   for (const prefix of prefixes) {
     const filtered = procedures.filter(p => p.path === prefix || p.path.startsWith(`${prefix}.`))
-    const nsResult: IntrospectionResult = {
+    const prefixResult: IntrospectionResult = {
       ...meta,
-      description: generateDescription(serializer, filtered, path),
+      description: mergeDescription(
+        generateDescription(serializer, filtered, path),
+        meta?.description,
+      ),
       serializer,
       pathFilter: prefix,
       procedures: filtered,
     }
-    routerDef[`${path}.${prefix}`] = t.procedure.query(() => nsResult)
+    routerDef[`${path}.${prefix}`] = t.procedure.query(() => prefixResult)
   }
 
   return t.router(routerDef)
@@ -104,6 +126,10 @@ export function withIntrospection<TRouter extends AnyTRPCRouter>(
   appRouter: TRouter,
   options: IntrospectionRouterOptions = {},
 ) {
+  if (options.enabled === false) {
+    return appRouter
+  }
+
   return t.mergeRouters(
     appRouter,
     createIntrospectionRouter(t, appRouter, options),
@@ -114,6 +140,10 @@ export function addIntrospectionEndpoint<TRouter extends AnyTRPCRouter>(
   router: TRouter,
   options: IntrospectionRouterOptions = {},
 ) {
+  if (options.enabled === false) {
+    return router
+  }
+
   const runtimeConfig = { ...(router._def._config as InitTRPCOptions & { $types?: unknown }) }
   delete runtimeConfig.$types
 
