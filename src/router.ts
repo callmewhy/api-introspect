@@ -69,28 +69,31 @@ export function createIntrospectionRouter(
     procedures,
   }
 
-  // Build namespace sub-routes so e.g. /_introspect.user returns only user.* procedures
-  const namespaces = [...new Set(
-    procedures
-      .map(p => p.path.split('.')[0])
-      .filter((ns): ns is string => !!ns),
-  )]
+  // Build sub-routes for every path prefix so multi-level filtering works
+  // e.g. /_introspect.user, /_introspect.user.list, /_introspect.health.check
+  const prefixes = new Set<string>()
+  for (const p of procedures) {
+    const parts = p.path.split('.')
+    for (let i = 1; i <= parts.length; i++) {
+      prefixes.add(parts.slice(0, i).join('.'))
+    }
+  }
 
   // eslint-disable-next-line ts/no-explicit-any
   const routerDef: Record<string, any> = {
     [path]: t.procedure.query(() => result),
   }
 
-  for (const ns of namespaces) {
-    const filtered = procedures.filter(p => p.path === ns || p.path.startsWith(`${ns}.`))
+  for (const prefix of prefixes) {
+    const filtered = procedures.filter(p => p.path === prefix || p.path.startsWith(`${prefix}.`))
     const nsResult: IntrospectionResult = {
       ...meta,
       description: generateDescription(serializer, filtered, path),
       serializer,
-      pathFilter: ns,
+      pathFilter: prefix,
       procedures: filtered,
     }
-    routerDef[`${path}.${ns}`] = t.procedure.query(() => nsResult)
+    routerDef[`${path}.${prefix}`] = t.procedure.query(() => nsResult)
   }
 
   return t.router(routerDef)

@@ -26,6 +26,7 @@
     "build": "tsc --noEmit && tsdown",
     "clean": "rm -rf dist",
     "lint": "eslint \"src/**/*.ts\" --fix --max-warnings 0",
+    "lint:fix": "eslint \"src/**/*.ts\" --fix",
     "test": "vitest run"
   },
   "peerDependencies": {

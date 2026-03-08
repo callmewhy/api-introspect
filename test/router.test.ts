@@ -118,6 +118,43 @@ describe('createIntrospectionRouter', () => {
     expect(healthData.procedures[0]?.path).toBe('health.check')
   })
 
+  it('creates multi-level sub-routes for deep path filtering', () => {
+    const t = initTRPC.create()
+    const appRouter = t.router({
+      user: t.router({
+        list: t.procedure.query(() => ['alice']),
+        create: t.procedure
+          .input(z.object({ name: z.string() }))
+          .mutation(({ input }) => input),
+      }),
+      health: t.router({
+        check: t.procedure.query(() => ({ status: 'ok' })),
+      }),
+    })
+
+    const result = createIntrospectionRouter(t, appRouter)
+
+    // Deep path filters should exist
+    expect(result._def.procedures).toHaveProperty('_introspect.user.list')
+    expect(result._def.procedures).toHaveProperty('_introspect.user.create')
+    expect(result._def.procedures).toHaveProperty('_introspect.health.check')
+
+    const userList = getResolver(result, '_introspect.user.list')() as IntrospectionResult
+    expect(userList.pathFilter).toBe('user.list')
+    expect(userList.procedures).toHaveLength(1)
+    expect(userList.procedures[0]?.path).toBe('user.list')
+
+    const userCreate = getResolver(result, '_introspect.user.create')() as IntrospectionResult
+    expect(userCreate.pathFilter).toBe('user.create')
+    expect(userCreate.procedures).toHaveLength(1)
+    expect(userCreate.procedures[0]?.path).toBe('user.create')
+
+    const healthCheck = getResolver(result, '_introspect.health.check')() as IntrospectionResult
+    expect(healthCheck.pathFilter).toBe('health.check')
+    expect(healthCheck.procedures).toHaveLength(1)
+    expect(healthCheck.procedures[0]?.path).toBe('health.check')
+  })
+
   it('includes top-level procedures in their namespace sub-route', () => {
     const t = initTRPC.create()
     const appRouter = t.router({

@@ -11,7 +11,7 @@ export interface EndpointInfo {
 }
 
 export interface IntrospectOptions {
-  exclude?: string[]
+  exclude?: readonly string[]
 }
 
 export type Serializer = 'json' | 'superjson' | 'custom'
@@ -25,9 +25,9 @@ export interface IntrospectionResult {
   [key: string]: unknown
 }
 
-export interface IntrospectionRouterOptions extends IntrospectOptions {
+export interface IntrospectionRouterOptions<TPath extends string = string> extends IntrospectOptions {
   enabled?: boolean
-  path?: string
+  path?: TPath
   serializer?: Serializer
   meta?: Record<string, unknown>
 }
