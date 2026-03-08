@@ -48,12 +48,16 @@ export function introspectRouter(
       continue
     }
 
+    const description = getDescription(def.meta)
+    const input = toInputJSONSchema(def.inputs)
+    const output = toJSONSchema(def.output)
+
     endpoints.push({
       path,
       type,
-      description: getDescription(def.meta),
-      input: toInputJSONSchema(def.inputs),
-      output: toJSONSchema(def.output),
+      ...(description && { description }),
+      ...(input && { input }),
+      ...(output && { output }),
     })
   }
 

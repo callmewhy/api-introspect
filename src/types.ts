@@ -5,9 +5,9 @@ export type JSONSchema = Record<string, unknown>
 export interface EndpointInfo {
   path: string
   type: TRPCProcedureType
-  description: string | undefined
-  input: JSONSchema | undefined
-  output: JSONSchema | undefined
+  description?: string
+  input?: JSONSchema
+  output?: JSONSchema
 }
 
 export interface IntrospectOptions {

@@ -173,6 +173,7 @@ pnpm lint      # lint
 
 ## Changelog
 
+- 0.3.0: Strongly type `meta` option (`{ name?, description? }` instead of `Record<string, unknown>`). Omit `undefined` fields from endpoint info for cleaner SuperJSON output. Highlight procedure `description` via `.meta()` in docs and example.
 - 0.2.0: Add `include` option to filter introspection to specific path prefixes.
 - 0.1.0: Initial release with core functionality and example server.
 

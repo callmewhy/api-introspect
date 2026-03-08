@@ -19,23 +19,14 @@ describe('introspectRouter', () => {
     expect(result[0]).toEqual({
       path: 'user.list',
       type: 'query',
-      description: undefined,
-      input: undefined,
-      output: undefined,
     })
     expect(result[1]).toEqual({
       path: 'user.create',
       type: 'mutation',
-      description: undefined,
-      input: undefined,
-      output: undefined,
     })
     expect(result[2]).toEqual({
       path: 'events.stream',
       type: 'subscription',
-      description: undefined,
-      input: undefined,
-      output: undefined,
     })
   })
 
