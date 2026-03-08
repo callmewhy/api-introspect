@@ -48,7 +48,7 @@ export function introspectRouter(
       path,
       type,
       description: getDescription(def.meta),
-      input: toJSONSchema(def.inputs?.[0]),
+      input: toInputJSONSchema(def.inputs),
       output: toJSONSchema(def.output),
     })
   }
@@ -93,6 +93,21 @@ function isObjectLike(value: unknown): value is object {
 
 function isZodSchema(value: unknown): value is z.ZodType {
   return value instanceof z.ZodType
+}
+
+function toInputJSONSchema(inputs: unknown[] | undefined) {
+  const zodInputs = inputs?.filter(isZodSchema) ?? []
+  if (zodInputs.length === 0) {
+    return undefined
+  }
+
+  if (zodInputs.length === 1) {
+    return toJSONSchema(zodInputs[0])
+  }
+
+  const [first, ...rest] = zodInputs
+  const combinedSchema = rest.reduce((schema, input) => z.intersection(schema, input), first)
+  return toJSONSchema(combinedSchema)
 }
 
 function toJSONSchema(schema: unknown) {

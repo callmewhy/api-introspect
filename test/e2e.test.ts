@@ -101,7 +101,7 @@ describe('e2e', () => {
     expect(res.ok).toBe(true)
 
     const json = await res.json()
-    const users = json.result.data as Array<{ id: number; name: string }>
+    const users = json.result.data as Array<{ id: number, name: string }>
 
     expect(users).toEqual([{ id: 1, name: 'Alice' }])
   })
@@ -115,7 +115,7 @@ describe('e2e', () => {
     expect(res.ok).toBe(true)
 
     const json = await res.json()
-    const user = json.result.data as { id: number; name: string }
+    const user = json.result.data as { id: number, name: string }
 
     expect(user.name).toBe('Bob')
   })

@@ -15,6 +15,7 @@ Peer dependencies: `@trpc/server >= 11`, `zod >= 4`
 
 ```ts
 import {initTRPC} from '@trpc/server'
+import {z} from 'zod'
 import {withIntrospection} from 'trpc-introspect'
 
 const t = initTRPC.create()
@@ -31,40 +32,40 @@ const appRouter = t.router({
 const rootRouter = withIntrospection(t, appRouter)
 ```
 
-This adds two endpoints:
+This adds the root introspection endpoint plus namespace filters:
 
-- `_introspect` -- returns all procedures with their input/output JSON Schemas
-- `_introspect.skill.md` -- returns a plain-text skill prompt for AI agents, with
-  serializer-specific
-  instructions (automatically detects `json`, `superjson`, or `custom`)
+- `_introspect` -- returns metadata plus all procedures with their input/output JSON Schemas
+- `_introspect.<namespace>` -- returns the same payload filtered by the first path segment
+  (for example `_introspect.user`)
 
 The `_introspect` query returns:
 
 ```json
-[
-  {
-    "path": "user.list",
-    "type": "query"
-  },
-  {
-    "path": "user.create",
-    "type": "mutation",
-    "input": {
-      "type": "object",
-      "properties": {
-        "name": {
-          "type": "string"
-        }
-      },
-      "required": [
-        "name"
-      ]
+{
+  "description": "tRPC API with 2 queries, 1 mutations. Encoding: standard JSON. ...",
+  "serializer": "json",
+  "procedures": [
+    {
+      "path": "user.list",
+      "type": "query"
     },
-    "output": {
-      "type": "object"
+    {
+      "path": "user.create",
+      "type": "mutation",
+      "input": {
+        "type": "object",
+        "properties": {
+          "name": {
+            "type": "string"
+          }
+        },
+        "required": [
+          "name"
+        ]
+      }
     }
-  }
-]
+  ]
+}
 ```
 
 ## API
@@ -113,26 +114,16 @@ Each endpoint returns:
 | `input`       | `Record<string, unknown> \| undefined`    | JSON Schema of the input, via `z.toJSONSchema` |
 | `output`      | `Record<string, unknown> \| undefined`    | JSON Schema of the output, if declared         |
 
-## AI Agent Skill
+## IntrospectionResult
 
-The `_introspect.skill.md` endpoint returns a prompt that teaches AI agents how to discover and call
-your API. It includes serializer-specific instructions for input/output formatting.
+The root response shape is:
 
-```bash
-# Fetch the skill prompt
-curl http://localhost:3000/_introspect.skill.md
-```
-
-The response is a tRPC result: `{"result":{"data":"# tRPC API Interaction Skill\n..."}}`.
-Extract `result.data` for the plain-text prompt.
-
-The skill text adapts based on the detected serializer:
-
-| Serializer  | Input format        | Response extraction |
-|-------------|---------------------|---------------------|
-| `json`      | Plain JSON          | `result.data`       |
-| `superjson` | `{"json": <input>}` | `result.data.json`  |
-| `custom`    | Server-specific     | Server-specific     |
+| Field         | Type                                | Description                                 |
+|---------------|-------------------------------------|---------------------------------------------|
+| `description` | `string`                            | Human-readable calling hints for the router |
+| `serializer`  | `'json' \| 'superjson' \| 'custom'` | Detected or overridden serializer           |
+| `pathFilter`  | `string \| undefined`               | Present on namespace-filtered sub-routes    |
+| `procedures`  | `EndpointInfo[]`                    | Introspected procedures                     |
 
 ## Example
 

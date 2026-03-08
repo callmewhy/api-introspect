@@ -1,3 +1,4 @@
+import { initTRPC } from '@trpc/server'
 import { describe, expect, it } from 'vitest'
 import { z } from 'zod'
 
@@ -69,6 +70,27 @@ describe('introspectRouter', () => {
     const properties = result[0]?.input?.properties as Record<string, { type: string }>
     expect(properties.name.type).toBe('string')
     expect(properties.age.type).toBe('number')
+  })
+
+  it('combines stacked input parsers from real tRPC procedures', () => {
+    const t = initTRPC.create()
+    const baseProcedure = t.procedure.input(z.object({ orgId: z.string() }))
+    const router = t.router({
+      'user.create': baseProcedure
+        .input(z.object({ name: z.string() }))
+        .mutation(({ input }) => input),
+    })
+
+    const result = introspectRouter(router)
+    const input = result[0]?.input as {
+      allOf: Array<{
+        properties?: Record<string, { type: string }>
+      }>
+    }
+
+    expect(input.allOf).toHaveLength(2)
+    expect(input.allOf[0]?.properties?.orgId?.type).toBe('string')
+    expect(input.allOf[1]?.properties?.name?.type).toBe('string')
   })
 
   it('converts output schema to JSON schema', () => {

@@ -1,39 +1,37 @@
 import type { AnyTRPCRouter } from '@trpc/server'
+import { initTRPC } from '@trpc/server'
 import { describe, expect, it } from 'vitest'
 
 import type { IntrospectionResult } from '../src'
 import { createIntrospectionRouter } from '../src'
-import { getResolver, mockRouter, mockT } from './helpers'
+import { getResolver } from './helpers'
 
 describe('serializer detection', () => {
   it('defaults to json serializer', () => {
-    const result = createIntrospectionRouter(mockT(), mockRouter({}))
+    const t = initTRPC.create()
+    const result = createIntrospectionRouter(t, t.router({}))
     const data = getResolver(result, '_introspect')() as IntrospectionResult
 
     expect(data.serializer).toBe('json')
   })
 
   it('detects superjson transformer from config', () => {
-    const appRouter = {
-      _def: {
-        procedures: {},
-        _config: {
-          transformer: {
-            serialize: (v: unknown) => ({ json: v, meta: {} }),
-            deserialize: (v: unknown) => v,
-          },
-        },
+    const t = initTRPC.create({
+      transformer: {
+        serialize: (v: unknown) => ({ json: v, meta: {} }),
+        deserialize: (v: unknown) => v,
       },
-    } as unknown as AnyTRPCRouter
-
-    const result = createIntrospectionRouter(mockT(), appRouter)
+    })
+    const appRouter = t.router({}) as AnyTRPCRouter
+    const result = createIntrospectionRouter(t, appRouter)
     const data = getResolver(result, '_introspect')() as IntrospectionResult
 
     expect(data.serializer).toBe('superjson')
   })
 
   it('allows manual serializer override', () => {
-    const result = createIntrospectionRouter(mockT(), mockRouter({}), { serializer: 'superjson' })
+    const t = initTRPC.create()
+    const result = createIntrospectionRouter(t, t.router({}), { serializer: 'superjson' })
     const data = getResolver(result, '_introspect')() as IntrospectionResult
 
     expect(data.serializer).toBe('superjson')
@@ -42,7 +40,8 @@ describe('serializer detection', () => {
 
 describe('meta fields', () => {
   it('includes user-provided meta in the response', () => {
-    const result = createIntrospectionRouter(mockT(), mockRouter({}), {
+    const t = initTRPC.create()
+    const result = createIntrospectionRouter(t, t.router({}), {
       meta: { name: 'My API' },
     })
     const data = getResolver(result, '_introspect')() as IntrospectionResult
@@ -54,7 +53,8 @@ describe('meta fields', () => {
   })
 
   it('returns only serializer and procedures when no meta provided', () => {
-    const result = createIntrospectionRouter(mockT(), mockRouter({}))
+    const t = initTRPC.create()
+    const result = createIntrospectionRouter(t, t.router({}))
     const data = getResolver(result, '_introspect')() as IntrospectionResult
 
     expect(Object.keys(data)).toEqual(['description', 'serializer', 'procedures'])

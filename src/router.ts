@@ -69,7 +69,7 @@ export function createIntrospectionRouter(
     procedures,
   }
 
-  // Build namespace sub-routes so e.g. /_introspect/user returns only user.* procedures
+  // Build namespace sub-routes so e.g. /_introspect.user returns only user.* procedures
   const namespaces = [...new Set(
     procedures
       .map(p => p.path.split('.')[0])
@@ -82,7 +82,7 @@ export function createIntrospectionRouter(
   }
 
   for (const ns of namespaces) {
-    const filtered = procedures.filter(p => p.path.startsWith(`${ns}.`))
+    const filtered = procedures.filter(p => p.path === ns || p.path.startsWith(`${ns}.`))
     const nsResult: IntrospectionResult = {
       ...meta,
       description: generateDescription(serializer, filtered, path),
@@ -90,7 +90,6 @@ export function createIntrospectionRouter(
       pathFilter: ns,
       procedures: filtered,
     }
-    // Dotted key e.g. '_introspect.user' maps to URL /_introspect/user
     routerDef[`${path}.${ns}`] = t.procedure.query(() => nsResult)
   }
 

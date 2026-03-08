@@ -4,18 +4,22 @@ import { z } from 'zod'
 
 import type { IntrospectionResult } from '../src'
 import { addIntrospectionEndpoint, createIntrospectionRouter, withIntrospection } from '../src'
-import { getResolver, mockProcedure, mockRouter, mockT } from './helpers'
+import { getResolver, mockRouter } from './helpers'
+
+const duplicateIntrospectionPathError = /Duplicate key _introspect/
 
 describe('createIntrospectionRouter', () => {
   it('creates a router with _introspect procedure', () => {
-    const appRouter = mockRouter({
-      'user.list': mockProcedure({
-        type: 'query',
-        output: z.array(z.string()),
+    const t = initTRPC.create()
+    const appRouter = t.router({
+      user: t.router({
+        list: t.procedure
+          .output(z.array(z.string()))
+          .query(() => ['alice', 'bob']),
       }),
     })
 
-    const result = createIntrospectionRouter(mockT(), appRouter)
+    const result = createIntrospectionRouter(t, appRouter)
 
     expect(result._def.procedures).toHaveProperty('_introspect')
 
@@ -29,19 +33,25 @@ describe('createIntrospectionRouter', () => {
   })
 
   it('uses custom path', () => {
-    const result = createIntrospectionRouter(mockT(), mockRouter({}), { path: 'schema' })
+    const t = initTRPC.create()
+    const result = createIntrospectionRouter(t, t.router({}), { path: 'schema' })
 
     expect(result._def.procedures).toHaveProperty('schema')
     expect(result._def.procedures).not.toHaveProperty('_introspect')
   })
 
   it('passes exclude option through', () => {
-    const appRouter = mockRouter({
-      'admin.stats': mockProcedure({ type: 'query' }),
-      'user.list': mockProcedure({ type: 'query' }),
+    const t = initTRPC.create()
+    const appRouter = t.router({
+      admin: t.router({
+        stats: t.procedure.query(() => ({ total: 1 })),
+      }),
+      user: t.router({
+        list: t.procedure.query(() => ['alice']),
+      }),
     })
 
-    const result = createIntrospectionRouter(mockT(), appRouter, { exclude: ['admin.'] })
+    const result = createIntrospectionRouter(t, appRouter, { exclude: ['admin.'] })
 
     const data = getResolver(result, '_introspect')() as IntrospectionResult
     expect(data.procedures).toHaveLength(1)
@@ -62,7 +72,8 @@ describe('createIntrospectionRouter', () => {
       },
     })
 
-    const result = createIntrospectionRouter(mockT(), appRouter)
+    const t = initTRPC.create()
+    const result = createIntrospectionRouter(t, appRouter)
 
     expect(inputAccessCount).toBe(1)
 
@@ -73,13 +84,20 @@ describe('createIntrospectionRouter', () => {
   })
 
   it('creates namespace sub-routes for each top-level namespace', () => {
-    const appRouter = mockRouter({
-      'user.list': mockProcedure({ type: 'query' }),
-      'user.create': mockProcedure({ type: 'mutation' }),
-      'health.check': mockProcedure({ type: 'query' }),
+    const t = initTRPC.create()
+    const appRouter = t.router({
+      user: t.router({
+        list: t.procedure.query(() => ['alice']),
+        create: t.procedure
+          .input(z.object({ name: z.string() }))
+          .mutation(({ input }) => input),
+      }),
+      health: t.router({
+        check: t.procedure.query(() => ({ status: 'ok' })),
+      }),
     })
 
-    const result = createIntrospectionRouter(mockT(), appRouter)
+    const result = createIntrospectionRouter(t, appRouter)
 
     expect(result._def.procedures).toHaveProperty('_introspect')
     expect(result._def.procedures).toHaveProperty('_introspect.user')
@@ -100,12 +118,33 @@ describe('createIntrospectionRouter', () => {
     expect(healthData.procedures[0]?.path).toBe('health.check')
   })
 
-  it('returns an empty router when disabled', () => {
-    const appRouter = mockRouter({
-      'user.list': mockProcedure({ type: 'query' }),
+  it('includes top-level procedures in their namespace sub-route', () => {
+    const t = initTRPC.create()
+    const appRouter = t.router({
+      userList: t.procedure
+        .output(z.array(z.string()))
+        .query(() => ['alice', 'bob']),
     })
 
-    const result = createIntrospectionRouter(mockT(), appRouter, { enabled: false })
+    const result = createIntrospectionRouter(t, appRouter)
+
+    expect(result._def.procedures).toHaveProperty('_introspect.userList')
+
+    const data = getResolver(result, '_introspect.userList')() as IntrospectionResult
+    expect(data.pathFilter).toBe('userList')
+    expect(data.procedures).toHaveLength(1)
+    expect(data.procedures[0]?.path).toBe('userList')
+  })
+
+  it('returns an empty router when disabled', () => {
+    const t = initTRPC.create()
+    const appRouter = t.router({
+      user: t.router({
+        list: t.procedure.query(() => ['alice']),
+      }),
+    })
+
+    const result = createIntrospectionRouter(t, appRouter, { enabled: false })
 
     expect(result._def.procedures).toEqual({})
   })
@@ -113,15 +152,26 @@ describe('createIntrospectionRouter', () => {
 
 describe('withIntrospection', () => {
   it('merges the introspection router into the app router', () => {
-    const appRouter = mockRouter({
-      'user.list': mockProcedure({ type: 'query' }),
+    const t = initTRPC.create()
+    const appRouter = t.router({
+      user: t.router({
+        list: t.procedure.query(() => ['alice']),
+      }),
     })
-    const t = mockT()
 
     const result = withIntrospection(t, appRouter)
 
     expect(result._def.procedures).toHaveProperty('user.list')
     expect(result._def.procedures).toHaveProperty('_introspect')
+  })
+
+  it('surfaces duplicate path errors from real tRPC merges', () => {
+    const t = initTRPC.create()
+    const appRouter = t.router({
+      _introspect: t.procedure.query(() => 'reserved'),
+    })
+
+    expect(() => withIntrospection(t, appRouter)).toThrowError(duplicateIntrospectionPathError)
   })
 })
 
