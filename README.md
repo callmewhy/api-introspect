@@ -98,13 +98,13 @@ already attached.
 
 ### Options
 
-| Option       | Type         | Default         | Description                                                         |
-|--------------|--------------|-----------------|---------------------------------------------------------------------|
-| `enabled`    | `boolean`    | `true`          | Disable the introspection endpoint entirely                         |
-| `exclude`    | `string[]`   | `[]`            | Path prefixes to exclude (e.g. `admin.`)                            |
+| Option       | Type         | Default         | Description                                                                                               |
+|--------------|--------------|-----------------|-----------------------------------------------------------------------------------------------------------|
+| `enabled`    | `boolean`    | `true`          | Disable the introspection endpoint entirely                                                               |
+| `exclude`    | `string[]`   | `[]`            | Path prefixes to exclude (e.g. `admin.`)                                                                  |
 | `meta`       | `object`     | `undefined`     | Extra metadata to merge into the response; `meta.description` is appended after the generated description |
-| `path`       | `string`     | `'_introspect'` | Procedure path for the introspection query                          |
-| `serializer` | `Serializer` | auto-detected   | Override serializer detection (`'json'`, `'superjson'`, `'custom'`) |
+| `path`       | `string`     | `'_introspect'` | Procedure path for the introspection query                                                                |
+| `serializer` | `Serializer` | auto-detected   | Override serializer detection (`'json'`, `'superjson'`, `'custom'`)                                       |
 
 ## EndpointInfo
 
@@ -122,12 +122,12 @@ Each endpoint returns:
 
 The root response shape is:
 
-| Field         | Type                                | Description                                 |
-|---------------|-------------------------------------|---------------------------------------------|
+| Field         | Type                                | Description                                                                            |
+|---------------|-------------------------------------|----------------------------------------------------------------------------------------|
 | `description` | `string`                            | Human-readable calling hints for the router, optionally followed by `meta.description` |
-| `serializer`  | `'json' \| 'superjson' \| 'custom'` | Detected or overridden serializer           |
-| `pathFilter`  | `string \| undefined`               | Present on prefix-filtered sub-routes       |
-| `procedures`  | `EndpointInfo[]`                    | Introspected procedures                     |
+| `serializer`  | `'json' \| 'superjson' \| 'custom'` | Detected or overridden serializer                                                      |
+| `pathFilter`  | `string \| undefined`               | Present on prefix-filtered sub-routes                                                  |
+| `procedures`  | `EndpointInfo[]`                    | Introspected procedures                                                                |
 
 ## Example
 
@@ -150,6 +150,10 @@ pnpm test      # run tests
 pnpm build     # build dist
 pnpm lint      # lint
 ```
+
+## Changelog
+
+- 0.1.0: Initial release with core functionality and example server.
 
 ## License
 
