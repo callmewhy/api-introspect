@@ -2,7 +2,7 @@ import { initTRPC } from '@trpc/server'
 import { createHTTPServer } from '@trpc/server/adapters/standalone'
 import { z } from 'zod'
 
-import { createIntrospectionRouter } from '../src'
+import { withIntrospection } from '../src'
 
 const t = initTRPC.create()
 
@@ -62,11 +62,7 @@ const appRouter = t.router({
   }),
 })
 
-// Merge introspection into the app router
-const rootRouter = t.mergeRouters(
-  appRouter,
-  createIntrospectionRouter(t, appRouter),
-)
+const rootRouter = withIntrospection(t, appRouter)
 
 const server = createHTTPServer({ router: rootRouter })
 server.listen(3000)
