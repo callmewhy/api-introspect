@@ -3,9 +3,9 @@ Release this package: update docs, then publish to npm.
 ## Steps
 
 1. Run `npm whoami` to verify the user is logged in to npm. If not, stop and ask them to run `npm login` first, then retry.
-2. Run `pnpm test` to make sure all tests pass. If tests fail, stop and report the failures.
-3. Run `pnpm build` to build the package. If the build fails, stop and report the error.
-4. Run `pnpm lint` to check for lint errors. If lint fails, stop and report the errors.
+2. Run `npm test` to make sure all tests pass. If tests fail, stop and report the failures.
+3. Run `npm build` to build the package. If the build fails, stop and report the error.
+4. Run `npm lint` to check for lint errors. If lint fails, stop and report the errors.
 5. Find the latest version tag via `git tag --sort=-v:refname | head -1`. If no tags exist, use the initial commit as the base.
 6. Run `git diff <tag>..HEAD -- src/` to see all source code changes since the last release.
 7. Read the current `README.md`. If there are meaningful changes (new exports, API changes, new options, behavior changes, bug fixes), update the relevant sections. Do not rewrite sections unaffected by changes. If there are no meaningful changes, skip the update.
