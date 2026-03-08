@@ -56,6 +56,7 @@ describe('e2e', () => {
     expect(data.serializer).toBe('json')
     expect(data.name).toBe('Test API')
     expect(data.description).toContain('tRPC API')
+    expect(data.pathFilter).toBeUndefined()
 
     const paths = data.procedures.map(e => e.path)
     expect(paths).toContain('user.list')
@@ -87,6 +88,8 @@ describe('e2e', () => {
 
     const json = await res.json()
     const data = json.result.data as IntrospectionResult
+
+    expect(data.pathFilter).toBe('user')
 
     const paths = data.procedures.map(e => e.path)
     expect(paths).toEqual(['user.list', 'user.create'])

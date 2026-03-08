@@ -85,11 +85,17 @@ describe('createIntrospectionRouter', () => {
     expect(result._def.procedures).toHaveProperty('_introspect.user')
     expect(result._def.procedures).toHaveProperty('_introspect.health')
 
+    const rootData = getResolver(result, '_introspect')() as IntrospectionResult
+    expect(rootData.pathFilter).toBeUndefined()
+    expect(rootData.procedures).toHaveLength(3)
+
     const userData = getResolver(result, '_introspect.user')() as IntrospectionResult
+    expect(userData.pathFilter).toBe('user')
     expect(userData.procedures).toHaveLength(2)
     expect(userData.procedures.map(p => p.path)).toEqual(['user.list', 'user.create'])
 
     const healthData = getResolver(result, '_introspect.health')() as IntrospectionResult
+    expect(healthData.pathFilter).toBe('health')
     expect(healthData.procedures).toHaveLength(1)
     expect(healthData.procedures[0]?.path).toBe('health.check')
   })
