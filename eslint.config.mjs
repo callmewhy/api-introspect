@@ -7,4 +7,7 @@ export default defineConfig({
     '**/build/**',
     '**/coverage/**',
   ],
+  rules: {
+    'no-console': 'off',
+  },
 })

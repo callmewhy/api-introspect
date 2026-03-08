@@ -10,28 +10,25 @@ type InitTRPCOptions = Parameters<typeof initTRPC.create>[0]
 type AnyTRPCRoot = TRPCRootObject<any, any, any, any>
 /* eslint-enable ts/no-explicit-any */
 
-function generateDescription(serializer: Serializer, procedures: EndpointInfo[]): string {
-  const queries = procedures.filter(p => p.type === 'query')
-  const mutations = procedures.filter(p => p.type === 'mutation')
-  const subscriptions = procedures.filter(p => p.type === 'subscription')
+function generateDescription(serializer: Serializer, procedures: EndpointInfo[], endpointPath: string): string {
+  const queries = procedures.filter(p => p.type === 'query').length
+  const mutations = procedures.filter(p => p.type === 'mutation').length
+  const subs = procedures.filter(p => p.type === 'subscription').length
 
-  const lines = [
-    'This is a tRPC API. Use the procedures listed below to interact with it.',
-    '',
-    `Serializer: ${serializer}`,
-    serializer === 'superjson'
-      ? 'Requests and responses use SuperJSON encoding. Wrap input with { json: <data>, meta: { ... } } and unwrap responses the same way.'
-      : 'Requests and responses use standard JSON encoding.',
-    '',
-    'To call a query: GET /<procedure_path>?input=<URL-encoded JSON>',
-    'To call a mutation: POST /<procedure_path> with JSON body',
-    'Response format: { "result": { "data": <value> } }',
-    '',
-    `Available procedures: ${queries.length} queries, ${mutations.length} mutations${subscriptions.length ? `, ${subscriptions.length} subscriptions` : ''}`,
-    'See the "procedures" array for the full list with input/output JSON schemas.',
-  ]
+  const encoding = serializer === 'superjson'
+    ? 'SuperJSON (wrap input with {json,meta}, unwrap responses the same way)'
+    : 'standard JSON'
 
-  return lines.join('\n')
+  const counts = [
+    queries && `${queries} queries`,
+    mutations && `${mutations} mutations`,
+    subs && `${subs} subscriptions`,
+  ].filter(Boolean).join(', ')
+
+  const namespaces = [...new Set(procedures.map(p => p.path.split('.')[0]).filter(Boolean))]
+  const nsExample = namespaces.length > 0 ? ` (e.g. /${endpointPath}.${namespaces[0]} to list only ${namespaces[0]} procedures)` : ''
+
+  return `tRPC API with ${counts || 'no procedures'}. Encoding: ${encoding}. Queries: GET /<path>?input=<url-encoded-json>. Mutations: POST /<path> with JSON body. Response: {"result":{"data":<value>}}. Append .<namespace> to this endpoint to filter by path prefix${nsExample}.`
 }
 
 /**
@@ -63,7 +60,7 @@ export function createIntrospectionRouter(
   const procedures = introspectRouter(appRouter, introspectOptions)
   const serializer = options.serializer ?? detectSerializer(appRouter._def._config)
 
-  const description = generateDescription(serializer, procedures)
+  const description = generateDescription(serializer, procedures, path)
 
   const result: IntrospectionResult = {
     ...meta,
@@ -72,10 +69,6 @@ export function createIntrospectionRouter(
     procedures,
   }
 
-  const baseRouter = t.router({
-    [path]: t.procedure.query(() => result),
-  })
-
   // Build namespace sub-routes so e.g. /_introspect/user returns only user.* procedures
   const namespaces = [...new Set(
     procedures
@@ -83,28 +76,24 @@ export function createIntrospectionRouter(
       .filter((ns): ns is string => !!ns),
   )]
 
-  if (namespaces.length === 0) {
-    return baseRouter
+  // eslint-disable-next-line ts/no-explicit-any
+  const routerDef: Record<string, any> = {
+    [path]: t.procedure.query(() => result),
   }
 
-  const namespaceEntries = Object.fromEntries(
-    namespaces.map((ns) => {
-      const filtered = procedures.filter(p => p.path.startsWith(`${ns}.`))
-      const nsResult: IntrospectionResult = {
-        ...meta,
-        description: generateDescription(serializer, filtered),
-        serializer,
-        procedures: filtered,
-      }
-      return [ns, t.procedure.query(() => nsResult)]
-    }),
-  )
+  for (const ns of namespaces) {
+    const filtered = procedures.filter(p => p.path.startsWith(`${ns}.`))
+    const nsResult: IntrospectionResult = {
+      ...meta,
+      description: generateDescription(serializer, filtered, path),
+      serializer,
+      procedures: filtered,
+    }
+    // Dotted key e.g. '_introspect.user' maps to URL /_introspect/user
+    routerDef[`${path}.${ns}`] = t.procedure.query(() => nsResult)
+  }
 
-  const nsRouter = t.router({
-    [path]: t.router(namespaceEntries),
-  })
-
-  return t.mergeRouters(baseRouter, nsRouter)
+  return t.router(routerDef)
 }
 
 export function withIntrospection<TRouter extends AnyTRPCRouter>(

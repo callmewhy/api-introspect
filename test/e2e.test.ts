@@ -81,6 +81,18 @@ describe('e2e', () => {
     expect(userCreate?.input?.type).toBe('object')
   })
 
+  it('_introspect.user returns only user namespace procedures', async () => {
+    const res = await fetch(`${baseUrl}/_introspect.user`)
+    expect(res.ok).toBe(true)
+
+    const json = await res.json()
+    const data = json.result.data as IntrospectionResult
+
+    const paths = data.procedures.map(e => e.path)
+    expect(paths).toEqual(['user.list', 'user.create'])
+    expect(paths).not.toContain('health.check')
+  })
+
   it('can call a query discovered via introspection', async () => {
     const res = await fetch(`${baseUrl}/user.list`)
     expect(res.ok).toBe(true)
