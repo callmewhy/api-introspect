@@ -31,7 +31,14 @@ const appRouter = t.router({
 const rootRouter = withIntrospection(t, appRouter)
 ```
 
-This adds a `_introspect` query that returns:
+This adds two endpoints:
+
+- `_introspect` -- returns all procedures with their input/output JSON Schemas
+- `_introspect.skill.md` -- returns a plain-text skill prompt for AI agents, with
+  serializer-specific
+  instructions (automatically detects `json`, `superjson`, or `custom`)
+
+The `_introspect` query returns:
 
 ```json
 [
@@ -87,23 +94,45 @@ already attached.
 
 ### Options
 
-| Option    | Type       | Default         | Description                                |
-|-----------|------------|-----------------|--------------------------------------------|
-| `enabled` | `boolean`  | `true`          | Disable the introspection endpoint entirely |
-| `exclude` | `string[]` | `[]`            | Path prefixes to exclude (e.g. `admin.`)   |
-| `path`    | `string`   | `'_introspect'` | Procedure path for the introspection query |
+| Option       | Type         | Default         | Description                                                         |
+|--------------|--------------|-----------------|---------------------------------------------------------------------|
+| `enabled`    | `boolean`    | `true`          | Disable the introspection endpoint entirely                         |
+| `exclude`    | `string[]`   | `[]`            | Path prefixes to exclude (e.g. `admin.`)                            |
+| `path`       | `string`     | `'_introspect'` | Procedure path for the introspection query                          |
+| `serializer` | `Serializer` | auto-detected   | Override serializer detection (`'json'`, `'superjson'`, `'custom'`) |
 
 ## EndpointInfo
 
 Each endpoint returns:
 
-| Field         | Type                                   | Description                                    |
-|---------------|----------------------------------------|------------------------------------------------|
-| `path`        | `string`                               | Dot-separated procedure path                   |
-| `type`        | `'query' \| 'mutation' \| 'subscription'` | Procedure type                              |
-| `description` | `string \| undefined`                  | From procedure meta, if set                    |
-| `input`       | `Record<string, unknown> \| undefined` | JSON Schema of the input, via `z.toJSONSchema` |
-| `output`      | `Record<string, unknown> \| undefined` | JSON Schema of the output, if declared         |
+| Field         | Type                                      | Description                                    |
+|---------------|-------------------------------------------|------------------------------------------------|
+| `path`        | `string`                                  | Dot-separated procedure path                   |
+| `type`        | `'query' \| 'mutation' \| 'subscription'` | Procedure type                                 |
+| `description` | `string \| undefined`                     | From procedure meta, if set                    |
+| `input`       | `Record<string, unknown> \| undefined`    | JSON Schema of the input, via `z.toJSONSchema` |
+| `output`      | `Record<string, unknown> \| undefined`    | JSON Schema of the output, if declared         |
+
+## AI Agent Skill
+
+The `_introspect.skill.md` endpoint returns a prompt that teaches AI agents how to discover and call
+your API. It includes serializer-specific instructions for input/output formatting.
+
+```bash
+# Fetch the skill prompt
+curl http://localhost:3000/_introspect.skill.md
+```
+
+The response is a tRPC result: `{"result":{"data":"# tRPC API Interaction Skill\n..."}}`.
+Extract `result.data` for the plain-text prompt.
+
+The skill text adapts based on the detected serializer:
+
+| Serializer  | Input format        | Response extraction |
+|-------------|---------------------|---------------------|
+| `json`      | Plain JSON          | `result.data`       |
+| `superjson` | `{"json": <input>}` | `result.data.json`  |
+| `custom`    | Server-specific     | Server-specific     |
 
 ## Example
 
