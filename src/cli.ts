@@ -7,20 +7,21 @@ const HELP = `Usage: trpc-introspect <base-url> [procedure] [input]
 
 Discover and call tRPC procedures.
 
+IMPORTANT: Always run without [procedure] first to list all available procedures with input schemas. Do not guess procedure names or input shapes -- use the introspection output to determine the correct values.
+
 Arguments:
   base-url    Base URL of the tRPC server (include path prefix if any)
   procedure   Procedure path (e.g. user.list, user.getById)
-  input       JSON input (e.g. '{"id":1}')
+  input       JSON input (must match the procedure's input schema from introspection)
 
 Options:
   -H, --header <key:value>  Custom header (repeatable)
   -h, --help                Show this help message
 
 Examples:
-  trpc-introspect <base-url>
-  trpc-introspect <base-url> user.list
-  trpc-introspect <base-url> user.getById '{"id":1}'
-  trpc-introspect <base-url> user.create '{"name":"Alice"}'`
+- List all procedures:   trpc-introspect <base-url>
+- Call a query:          trpc-introspect <base-url> user.getById '{"id":1}'
+- Call a mutation:       trpc-introspect <base-url> user.create '{"name":"Alice"}'`
 
 interface ParsedArgs {
   baseUrl: string | undefined

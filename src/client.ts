@@ -160,5 +160,5 @@ function unwrapTRPCResponse(json: unknown): unknown {
 }
 
 function isSuperJSONEnvelope(data: unknown): boolean {
-  return typeof data === 'object' && data !== null && 'json' in data && 'meta' in data
+  return typeof data === 'object' && data !== null && 'json' in data
 }
