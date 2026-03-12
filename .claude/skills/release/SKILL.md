@@ -9,8 +9,12 @@ Release this package: update docs, tag, and push. Publishing is handled by GitHu
 5. Run `git diff <tag>..HEAD -- src/` to see all source code changes since the last release.
 6. Read the current `README.md`. If there are meaningful changes (new exports, API changes, new options, behavior changes, bug fixes), update the relevant sections. Do not rewrite sections unaffected by changes. If there are no meaningful changes, skip the update.
 7. Check the current version in `package.json` and the latest published version on npm via `npm view trpc-introspect version --json 2>/dev/null || echo "not published"`.
-8. Ask the user what version bump they want (patch, minor, or major), showing the current version, the latest published version, and what each bump would produce. Include an "as-is" option if the current version is not yet published.
-9. If a bump was selected, update the `version` field in `package.json` to the new version.
+8. Decide the version bump automatically:
+   - **minor**: new features, new exports, new options, new CLI commands, new API surface
+   - **patch**: bug fixes, refactors, internal changes, docs updates, CI changes
+   - The user will explicitly say "major" in advance if a major bump is needed; never pick major on your own.
+   - If the current version in `package.json` is already higher than the published version, use it as-is without bumping.
+9. Update the `version` field in `package.json` to the new version.
 10. If there are staged or unstaged changes (check via `git status`), create a git commit with the message `release: vX.Y.Z`. If the working tree is clean, skip the commit.
 11. Create a git tag `vX.Y.Z`.
 12. Run `git push --follow-tags` to push the commit and tag to the remote. This triggers the GitHub Actions workflow to publish to npm and create a GitHub Release.
