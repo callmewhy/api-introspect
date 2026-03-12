@@ -38,6 +38,7 @@ function joinUrl(baseUrl: string, path: string): string {
  * Fetch introspection data from a tRPC server.
  *
  * @param baseUrl - Base URL of the tRPC server, e.g. `http://localhost:3000`
+ * @param options - Optional settings for introspection path, prefix filter, and headers
  */
 export async function fetchIntrospection(
   baseUrl: string,

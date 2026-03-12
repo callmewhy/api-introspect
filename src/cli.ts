@@ -8,33 +8,25 @@ const HELP = `Usage: trpc-introspect <base-url> [procedure] [input]
 Discover and call tRPC procedures.
 
 Arguments:
-  base-url    Base URL of the tRPC server
+  base-url    Base URL of the tRPC server (include path prefix if any)
   procedure   Procedure path (e.g. user.list, user.getById)
   input       JSON input (e.g. '{"id":1}')
 
 Options:
-  --query                   Force procedure type to query
-  --mutation                Force procedure type to mutation
-  -t, --transformer <type>  Wire format: json | superjson (default: auto from introspection)
   -H, --header <key:value>  Custom header (repeatable)
-  --path <path>             Introspection endpoint path (default: _introspect)
   -h, --help                Show this help message
 
 Examples:
-  trpc-introspect http://localhost:3000
-  trpc-introspect http://localhost:3000 user.list
-  trpc-introspect http://localhost:3000 user.getById '{"id":1}'
-  trpc-introspect http://localhost:3000 user.create '{"name":"Alice"}' --mutation
-  trpc-introspect http://localhost:3000 -t superjson`
+  trpc-introspect http://localhost:3000/trpc
+  trpc-introspect http://localhost:3000/trpc user.list
+  trpc-introspect http://localhost:3000/trpc user.getById '{"id":1}'
+  trpc-introspect http://localhost:3000/trpc user.create '{"name":"Alice"}'`
 
 interface ParsedArgs {
   baseUrl: string | undefined
   procedure: string | undefined
   input: string | undefined
-  type: 'query' | 'mutation' | undefined
-  transformer: 'json' | 'superjson' | undefined
   headers: Record<string, string>
-  introspectionPath: string
 }
 
 function parseArgs(argv: string[]): ParsedArgs {
@@ -42,10 +34,7 @@ function parseArgs(argv: string[]): ParsedArgs {
     baseUrl: undefined,
     procedure: undefined,
     input: undefined,
-    type: undefined,
-    transformer: undefined,
     headers: {},
-    introspectionPath: '_introspect',
   }
 
   const positional: string[] = []
@@ -56,31 +45,6 @@ function parseArgs(argv: string[]): ParsedArgs {
     if (arg === '-h' || arg === '--help') {
       console.log(HELP)
       process.exit(0)
-    }
-
-    if (arg === '--query') {
-      result.type = 'query'
-      continue
-    }
-
-    if (arg === '--mutation') {
-      result.type = 'mutation'
-      continue
-    }
-
-    if (arg === '-t' || arg === '--transformer') {
-      const value = argv[++i]
-      if (value !== 'json' && value !== 'superjson') {
-        console.error(`Invalid transformer: ${value}. Use json or superjson.`)
-        process.exit(1)
-      }
-      result.transformer = value
-      continue
-    }
-
-    if (arg === '--path') {
-      result.introspectionPath = argv[++i]
-      continue
     }
 
     if (arg === '-H' || arg === '--header') {
@@ -122,10 +86,7 @@ async function main() {
   try {
     if (!args.procedure) {
       // Introspection mode
-      const result = await fetchIntrospection(args.baseUrl, {
-        path: args.introspectionPath,
-        headers,
-      })
+      const result = await fetchIntrospection(args.baseUrl, { headers })
       console.log(JSON.stringify(result, null, 2))
       return
     }
@@ -143,9 +104,7 @@ async function main() {
     }
 
     const result = await callProcedure(args.baseUrl, args.procedure, {
-      type: args.type,
       input,
-      transformer: args.transformer,
       headers,
     })
 
