@@ -11,7 +11,8 @@ IMPORTANT: Always run without [procedure] first to list all available procedures
 
 Arguments:
   base-url    Base URL of the tRPC server (include path prefix if any)
-  procedure   Procedure path (e.g. user.list, user.getById)
+  procedure   Procedure path to call (e.g. user.getById), or a path prefix
+              to filter the procedure list (e.g. "user" lists only user.*)
   input       JSON input (must match the procedure's input schema from introspection)
 
 Options:
@@ -19,9 +20,10 @@ Options:
   -h, --help                Show this help message
 
 Examples:
-- List all procedures:   trpc-introspect <base-url>
-- Call a query:          trpc-introspect <base-url> user.getById '{"id":1}'
-- Call a mutation:       trpc-introspect <base-url> user.create '{"name":"Alice"}'`
+  trpc-introspect <base-url>                                  List all procedures
+  trpc-introspect <base-url> user                             Filter by prefix
+  trpc-introspect <base-url> user.getById '{"id":1}'          Call a query
+  trpc-introspect <base-url> user.create '{"name":"Alice"}'   Call a mutation`
 
 interface ParsedArgs {
   baseUrl: string | undefined
@@ -85,14 +87,25 @@ async function main() {
   const headers = Object.keys(args.headers).length > 0 ? args.headers : undefined
 
   try {
+    const introspection = await fetchIntrospection(args.baseUrl, { headers })
+
     if (!args.procedure) {
-      // Introspection mode
-      const result = await fetchIntrospection(args.baseUrl, { headers })
-      console.log(JSON.stringify(result, null, 2))
+      console.log(JSON.stringify(introspection, null, 2))
       return
     }
 
-    // Call procedure
+    // If procedure not found, try as a prefix filter
+    const proc = introspection.procedures?.find(p => p.path === args.procedure)
+    if (!proc) {
+      const filtered = await fetchIntrospection(args.baseUrl, { filter: args.procedure, headers })
+      if (filtered.procedures?.length) {
+        console.log(JSON.stringify(filtered, null, 2))
+        return
+      }
+      const available = introspection.procedures?.map(p => p.path).join(', ') ?? '(none)'
+      throw new Error(`Procedure "${args.procedure}" not found. Available: ${available}`)
+    }
+
     let input: unknown
     if (args.input) {
       try {
@@ -106,9 +119,9 @@ async function main() {
 
     const result = await callProcedure(args.baseUrl, args.procedure, {
       input,
+      introspection,
       headers,
     })
-
     console.log(JSON.stringify(result, null, 2))
   }
   catch (error) {
