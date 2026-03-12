@@ -1,5 +1,9 @@
 # trpc-introspect
 
+[![npm version](https://img.shields.io/npm/v/trpc-introspect)](https://www.npmjs.com/package/trpc-introspect)
+[![CI](https://github.com/callmewhy/trpc-introspect/actions/workflows/ci.yml/badge.svg)](https://github.com/callmewhy/trpc-introspect/actions/workflows/ci.yml)
+[![License: MIT](https://img.shields.io/npm/l/trpc-introspect)](https://github.com/callmewhy/trpc-introspect/blob/main/LICENSE)
+
 Introspection for tRPC routers. Adds a query endpoint that returns all available API procedures with
 their types, descriptions, and input/output schemas as JSON Schema. Designed for AI agents to
 autonomously discover and learn how to use your API.
