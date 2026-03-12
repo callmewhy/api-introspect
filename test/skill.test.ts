@@ -40,7 +40,7 @@ describe('serializer detection', () => {
     const data = getResolver(result, '_introspect')() as IntrospectionResult
 
     expect(data.serializer).toBe('custom')
-    expect(data.description).toContain('custom tRPC transformer')
+    expect(data.description).toContain('npx trpc-introspect')
     expect(data.description).not.toContain('standard JSON')
     expect(data.description).not.toContain('GET /<path>?input=<url-encoded-json>')
   })
@@ -84,7 +84,7 @@ describe('meta fields', () => {
     const rootData = getResolver(result, '_introspect')() as IntrospectionResult
     const userData = getResolver(result, '_introspect.user')() as IntrospectionResult
 
-    expect(rootData.description).toContain('tRPC API with 1 queries.')
+    expect(rootData.description).toContain('tRPC API.')
     expect(rootData.description.endsWith('Contact the platform team before using admin procedures.')).toBe(true)
     expect(userData.description.endsWith('Contact the platform team before using admin procedures.')).toBe(true)
   })

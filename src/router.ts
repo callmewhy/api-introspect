@@ -2,37 +2,16 @@ import type { AnyTRPCRouter, TRPCRootObject } from '@trpc/server'
 
 import { introspectRouter } from './introspect'
 import { detectSerializer } from './serializer'
-import type { EndpointInfo, IntrospectionResult, IntrospectionRouterOptions, Serializer } from './types'
+import type { IntrospectionResult, IntrospectionRouterOptions } from './types'
 
 /* eslint-disable ts/no-explicit-any */
 type AnyTRPCRoot = TRPCRootObject<any, any, any, any>
 /* eslint-enable ts/no-explicit-any */
 
-function generateDescription(serializer: Serializer, procedures: EndpointInfo[], endpointPath: string): string {
-  const queries = procedures.filter(p => p.type === 'query').length
-  const mutations = procedures.filter(p => p.type === 'mutation').length
-  const subs = procedures.filter(p => p.type === 'subscription').length
-
-  const encoding = serializer === 'superjson'
-    ? 'SuperJSON (wrap input with {json,meta}, unwrap responses the same way)'
-    : serializer === 'custom'
-      ? 'a custom tRPC transformer (wire format is server-defined)'
-      : 'standard JSON'
-
-  const transportHint = serializer === 'custom'
-    ? 'Queries and mutations use the server\'s custom transformer, so inspect that transformer to encode requests and decode responses.'
-    : 'Queries: GET /<path>?input=<url-encoded-json>. Mutations: POST /<path> with JSON body. Response: {"result":{"data":<value>}}.'
-
-  const counts = [
-    queries && `${queries} queries`,
-    mutations && `${mutations} mutations`,
-    subs && `${subs} subscriptions`,
-  ].filter(Boolean).join(', ')
-
-  const prefixes = [...new Set(procedures.map(p => p.path.split('.')[0]).filter(Boolean))]
+function generateDescription(endpointPath: string, prefixes: string[]): string {
   const prefixExample = prefixes.length > 0 ? ` (e.g. /${endpointPath}.${prefixes[0]} to list only ${prefixes[0]} procedures)` : ''
 
-  return `tRPC API with ${counts || 'no procedures'}. Encoding: ${encoding}. ${transportHint} Append .<prefix> to this endpoint to filter by path prefix${prefixExample}.`
+  return `tRPC API. Use "npx trpc-introspect <base-url> [procedure] [input]" to discover and call procedures. Append .<prefix> to this endpoint to filter by path prefix${prefixExample}.`
 }
 
 function mergeDescription(baseDescription: string, extraDescription: unknown) {
@@ -76,16 +55,6 @@ export function createIntrospectionRouter(
   const procedures = introspectRouter(appRouter, introspectOptions)
   const serializer = serializerOverride ?? detectSerializer(appRouter._def._config)
 
-  const result: IntrospectionResult = {
-    ...(meta?.name && { name: meta.name }),
-    description: mergeDescription(
-      generateDescription(serializer, procedures, path),
-      meta?.description,
-    ),
-    serializer,
-    procedures,
-  }
-
   // Build sub-routes for every path prefix so multi-level filtering works.
   // e.g. /_introspect.user, /_introspect.user.profile, /_introspect.user.profile.get
   const prefixes = new Set<string>()
@@ -94,6 +63,19 @@ export function createIntrospectionRouter(
     for (let i = 1; i <= parts.length; i++) {
       prefixes.add(parts.slice(0, i).join('.'))
     }
+  }
+
+  const topLevelPrefixes = [...new Set(procedures.map(p => p.path.split('.')[0]).filter(Boolean))]
+  const description = mergeDescription(
+    generateDescription(path, topLevelPrefixes),
+    meta?.description,
+  )
+
+  const result: IntrospectionResult = {
+    ...(meta?.name && { name: meta.name }),
+    description,
+    serializer,
+    procedures,
   }
 
   // eslint-disable-next-line ts/no-explicit-any
@@ -105,10 +87,7 @@ export function createIntrospectionRouter(
     const filtered = procedures.filter(p => p.path === prefix || p.path.startsWith(`${prefix}.`))
     const prefixResult: IntrospectionResult = {
       ...(meta?.name && { name: meta.name }),
-      description: mergeDescription(
-        generateDescription(serializer, filtered, path),
-        meta?.description,
-      ),
+      description,
       serializer,
       pathFilter: prefix,
       procedures: filtered,
