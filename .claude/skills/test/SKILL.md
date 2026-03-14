@@ -21,7 +21,8 @@ Integration test the CLI by starting the example server and exercising every CLI
 
    **List & Format:**
    - List all procedures (no procedure argument) -- verify returns all procedures as full JSON
-   - Summary vs full mode -- verify via code review that `SUMMARY_THRESHOLD` in `src/cli/output.ts` controls the cutoff
+   - `--summary` flag -- run with `--summary` and verify output is in summary format (compact, no full JSON schemas)
+   - `--full` flag -- run with `--full` and verify output includes full JSON Schema details for all procedures
 
    **Filtering:**
    - Single prefix filter: e.g., `user` -- verify only `user.*` procedures returned
@@ -48,3 +49,5 @@ Integration test the CLI by starting the example server and exercising every CLI
 7. Print a summary of the results to the console.
 
 8. **Self-improvement (only when all tests pass):** If every test passed, review how the skill execution went -- were there wasted round-trips, incorrect assumptions, or unnecessary steps? If so, edit this SKILL.md to prevent the issue next time.
+
+9. **Coverage check:** Run `npx tsx src/cli/index.ts -h` and compare the help output against the tests in step 4. If any CLI flags or features are listed in help but not covered by a test, update this SKILL.md to add the missing test cases.
