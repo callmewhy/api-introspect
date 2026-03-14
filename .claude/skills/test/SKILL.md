@@ -17,6 +17,8 @@ Integration test the CLI by starting the example server and exercising every CLI
 
 4. Execute ALL the following tests **in parallel** (they are independent). Use the introspection output from step 2 to construct correct inputs -- do not guess or hardcode inputs.
 
+   **Important:** When capturing CLI JSON output for parsing, always redirect to a temp file (`> /tmp/out.json`) and read it back with `node -e "...require('fs').readFileSync('/tmp/out.json')..."`. Do NOT use `$()` command substitution -- it strips backslashes, corrupting regex patterns in JSON Schema output.
+
    **List & Format:**
    - List all procedures (no procedure argument) -- verify returns all procedures as full JSON
    - Summary vs full mode -- verify via code review that `SUMMARY_THRESHOLD` in `src/cli/output.ts` controls the cutoff
