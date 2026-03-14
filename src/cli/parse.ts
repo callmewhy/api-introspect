@@ -1,7 +1,6 @@
-#!/usr/bin/env node
 import process from 'node:process'
 
-import { callProcedure, fetchIntrospection } from './client'
+import type { ParsedArgs } from './types'
 
 const HELP = `Usage: trpc-introspect <base-url> [procedure] [input]
 
@@ -13,6 +12,7 @@ Arguments:
   base-url    Base URL of the tRPC server (include path prefix if any)
   procedure   Procedure path to call (e.g. user.getById), or a path prefix
               to filter the procedure list (e.g. "user" lists only user.*)
+              Supports multiple prefixes with comma (e.g. "user,post")
   input       JSON input (must match the procedure's input schema from introspection)
 
 Options:
@@ -22,17 +22,13 @@ Options:
 Examples:
   trpc-introspect <base-url>                                  List all procedures
   trpc-introspect <base-url> user                             Filter by prefix
+  trpc-introspect <base-url> user,post                        Filter by multiple prefixes
   trpc-introspect <base-url> user.getById '{"id":1}'          Call a query
   trpc-introspect <base-url> user.create '{"name":"Alice"}'   Call a mutation`
 
-interface ParsedArgs {
-  baseUrl: string | undefined
-  procedure: string | undefined
-  input: string | undefined
-  headers: Record<string, string>
-}
+export { HELP }
 
-function parseArgs(argv: string[]): ParsedArgs {
+export function parseArgs(argv: string[]): ParsedArgs {
   const result: ParsedArgs = {
     baseUrl: undefined,
     procedure: undefined,
@@ -75,59 +71,3 @@ function parseArgs(argv: string[]): ParsedArgs {
 
   return result
 }
-
-async function main() {
-  const args = parseArgs(process.argv.slice(2))
-
-  if (!args.baseUrl) {
-    console.log(HELP)
-    process.exit(1)
-  }
-
-  const headers = Object.keys(args.headers).length > 0 ? args.headers : undefined
-
-  try {
-    const introspection = await fetchIntrospection(args.baseUrl, { headers })
-
-    if (!args.procedure) {
-      console.log(JSON.stringify(introspection, null, 2))
-      return
-    }
-
-    // If procedure not found, try as a prefix filter
-    const proc = introspection.procedures?.find(p => p.path === args.procedure)
-    if (!proc) {
-      const filtered = await fetchIntrospection(args.baseUrl, { filter: args.procedure, headers })
-      if (filtered.procedures?.length) {
-        console.log(JSON.stringify(filtered, null, 2))
-        return
-      }
-      const available = introspection.procedures?.map(p => p.path).join(', ') ?? '(none)'
-      throw new Error(`Procedure "${args.procedure}" not found. Available: ${available}`)
-    }
-
-    let input: unknown
-    if (args.input) {
-      try {
-        input = JSON.parse(args.input)
-      }
-      catch {
-        console.error(`Invalid JSON input: ${args.input}`)
-        process.exit(1)
-      }
-    }
-
-    const result = await callProcedure(args.baseUrl, args.procedure, {
-      input,
-      introspection,
-      headers,
-    })
-    console.log(JSON.stringify(result, null, 2))
-  }
-  catch (error) {
-    console.error(`Error: ${error instanceof Error ? error.message : String(error)}`)
-    process.exit(1)
-  }
-}
-
-main()

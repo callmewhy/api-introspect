@@ -6,7 +6,7 @@
   "type": "module",
   "sideEffects": false,
   "bin": {
-    "trpc-introspect": "./dist/cli.mjs"
+    "trpc-introspect": "./dist/cli/index.mjs"
   },
   "exports": {
     ".": {
