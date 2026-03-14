@@ -2,33 +2,47 @@ Integration test the CLI by starting the example server and exercising every CLI
 
 ## Steps
 
-1. Run `npx tsx src/cli/index.ts -h` to see all CLI usage, options, and examples. Use this output to design a test plan covering every feature shown in the help text.
-
-2. Start the example server in the background:
+1. Start the example server in the background and wait for readiness:
    ```bash
    npx tsx example/server.ts &
+   # poll until ready
+   for i in 1 2 3 4 5; do curl -s http://localhost:3000/_introspect > /dev/null && break; sleep 1; done
    ```
-   Wait for it to be ready by polling `http://localhost:3000/_introspect` (retry a few times with short delays).
 
-3. Execute the test plan by running CLI commands via `npx tsx src/cli/index.ts`. For each test, record the test name, category, pass/fail status, and any error details. Cover at minimum:
-   - **List all procedures**: run without procedure argument
-   - **Summary vs full mode**: verify output format depends on procedure count (>10 shows summary with paths only, <=10 shows full JSON)
-   - **Single prefix filter**: e.g., `user` shows only `user.*` procedures
-   - **Multi-prefix filter (OR)**: e.g., `user,health` shows procedures from both prefixes
-   - **Call a query**: with correct input
-   - **Call a mutation**: with correct input and auth header
-   - **Custom headers**: `-H` flag
-   - **Error cases**: unknown procedure, invalid JSON input, missing auth on protected mutation
+2. Run `npx tsx src/cli/index.ts http://localhost:3000` (no procedure argument) to list all procedures. Parse this output to learn:
+   - The available procedure paths, types, and input schemas
+   - Which fields are required for each procedure
 
-4. Stop the server process.
+3. Read `example/context.ts` to learn the auth header format (e.g. `Bearer <token>`).
 
-5. Generate an HTML test report at `test/results/integration-report.html` with:
+4. Execute ALL the following tests **in parallel** (they are independent). Use the introspection output from step 2 to construct correct inputs -- do not guess or hardcode inputs.
+
+   **List & Format:**
+   - List all procedures (no procedure argument) -- verify returns all procedures as full JSON
+   - Summary vs full mode -- verify via code review that `SUMMARY_THRESHOLD` in `src/cli/output.ts` controls the cutoff
+
+   **Filtering:**
+   - Single prefix filter: e.g., `user` -- verify only `user.*` procedures returned
+   - Multi-prefix filter: e.g., `user,health` -- verify procedures from both prefixes returned
+
+   **Calling procedures:**
+   - Call a query with correct input (e.g., `user.getById '{"id":1}'`)
+   - Call a mutation with correct input AND correct auth header from step 3
+
+   **Error cases:**
+   - Unknown procedure -- verify non-zero exit code and error message
+   - Invalid JSON input -- verify non-zero exit code and error message
+   - Missing auth on protected mutation -- verify 401 error
+
+5. Stop the server: `kill $(lsof -ti:3000) 2>/dev/null`
+
+6. Generate an HTML test report at `test/results/integration-report.html` with:
    - Summary header: total tests, passed, failed, timestamp
    - Test results table grouped by category with pass/fail badges
    - Styled with inline CSS (no external dependencies)
    - Color-coded: green for pass, red for fail
    - If any test failed, include error details
 
-6. Print a summary of the results to the console.
+7. Print a summary of the results to the console.
 
-7. What do you think can be optimized in this skill execution? For example, the use of the CLI itself, whether efficiency can be improved in the skills, etc. You can directly edit the skill files to optimize the experience for the next test skill execution.
+8. **Self-improvement (only when all tests pass):** If every test passed, review how the skill execution went -- were there wasted round-trips, incorrect assumptions, or unnecessary steps? If so, edit this SKILL.md to prevent the issue next time.
