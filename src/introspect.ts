@@ -1,6 +1,7 @@
 import type { AnyTRPCRouter, TRPCProcedureType } from '@trpc/server'
 import { z } from 'zod'
 
+import { compactSchema } from './compact'
 import type { EndpointInfo, IntrospectOptions, JSONSchema } from './types'
 
 interface ZodSchemaWithInternalDef {
@@ -49,8 +50,8 @@ export function introspectRouter(
     }
 
     const description = getDescription(def.meta)
-    const input = toInputJSONSchema(def.inputs)
-    const output = toJSONSchema(def.output)
+    const input = compactSchema(toInputJSONSchema(def.inputs))
+    const output = compactSchema(toJSONSchema(def.output))
 
     endpoints.push({
       path,

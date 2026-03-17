@@ -1,3 +1,4 @@
+export { compactSchema } from './compact'
 export {
   introspectRouter,
 } from './introspect'

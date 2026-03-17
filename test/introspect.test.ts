@@ -121,8 +121,8 @@ describe('introspectRouter', () => {
     expect(properties.date).toMatchObject({
       type: 'string',
       format: 'date-time',
-      deprecated: true,
     })
+    expect(properties.date).not.toHaveProperty('deprecated')
   })
 
   it('handles .refine() schemas', () => {
