@@ -232,6 +232,8 @@ pnpm lint      # lint
 
 ## Changelog
 
+- 0.7.1: Fix TS2742 error for consumers by bundling DTS per entry point (no internal module
+  references in declaration files).
 - 0.7.0: Add `compactSchema` export that strips noise from JSON Schema output (removes
   `additionalProperties: false`, simplifies nullable `anyOf`, strips verbose date metadata,
   removes meaningless `maximum: 9007199254740991`). Input and output schemas are now

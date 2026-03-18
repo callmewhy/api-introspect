@@ -1,6 +1,6 @@
 {
   "name": "trpc-introspect",
-  "version": "0.7.0",
+  "version": "0.7.1",
   "description": "tRPC router introspection and CLI client. Discover procedures, input/output schemas, and call queries/mutations.",
   "license": "MIT",
   "type": "module",
