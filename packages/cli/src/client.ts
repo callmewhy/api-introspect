@@ -28,6 +28,8 @@ export interface CallProcedureOptions {
 }
 
 const TRAILING_SLASHES = /\/+$/
+const REST_PATH_RE = /^(GET|POST|PUT|PATCH|DELETE|OPTIONS|HEAD)\s+(\/.*)$/i
+const PATH_PARAM_RE = /:([A-Z_]\w*)/gi
 
 function joinUrl(baseUrl: string, path: string): string {
   const base = baseUrl.replace(TRAILING_SLASHES, '')
@@ -93,22 +95,52 @@ export async function callProcedure(
     transformer ??= resolveTransformer(introspection.serializer)
   }
 
-  const url = joinUrl(baseUrl, procedure)
-  const encoded = encodeInput(input, transformer)
+  // REST-style paths like "GET /user/:id" — extract method and substitute params
+  const restMatch = procedure.match(REST_PATH_RE)
 
   let res: Response
-  if (type === 'mutation') {
+  if (restMatch) {
+    const method = restMatch[1].toUpperCase()
+    let routePath = restMatch[2]
+    let body: Record<string, unknown> | undefined
+
+    // Substitute path params (:id) from input and collect remaining fields for body
+    if (input && typeof input === 'object' && !Array.isArray(input)) {
+      const remaining = { ...(input as Record<string, unknown>) }
+      routePath = routePath.replace(PATH_PARAM_RE, (_match, param: string) => {
+        const value = remaining[param]
+        delete remaining[param]
+        return String(value ?? '')
+      })
+      if (Object.keys(remaining).length > 0) {
+        body = remaining
+      }
+    }
+
+    const url = `${baseUrl.replace(TRAILING_SLASHES, '')}${routePath}`
     res = await fetch(url, {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json', ...headers },
-      body: encoded !== undefined ? JSON.stringify(encoded) : undefined,
+      method,
+      headers: body ? { 'Content-Type': 'application/json', ...headers } : headers,
+      body: body ? JSON.stringify(body) : undefined,
     })
   }
   else {
-    const queryUrl = encoded !== undefined
-      ? `${url}?input=${encodeURIComponent(JSON.stringify(encoded))}`
-      : url
-    res = await fetch(queryUrl, { headers })
+    const url = joinUrl(baseUrl, procedure)
+    const encoded = encodeInput(input, transformer)
+
+    if (type === 'mutation') {
+      res = await fetch(url, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json', ...headers },
+        body: encoded !== undefined ? JSON.stringify(encoded) : undefined,
+      })
+    }
+    else {
+      const queryUrl = encoded !== undefined
+        ? `${url}?input=${encodeURIComponent(JSON.stringify(encoded))}`
+        : url
+      res = await fetch(queryUrl, { headers })
+    }
   }
 
   if (!res.ok) {
@@ -156,7 +188,8 @@ function unwrapTRPCResponse(json: unknown): unknown {
     const error = (json as { error: { message?: string } }).error
     throw new Error(`tRPC error: ${error?.message ?? JSON.stringify(error)}`)
   }
-  throw new Error('Invalid tRPC response: expected { result: { data: ... } }')
+  // Plain JSON response (e.g. from Fastify / REST)
+  return json
 }
 
 function isSuperJSONEnvelope(data: unknown): boolean {

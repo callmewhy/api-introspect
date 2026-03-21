@@ -32,7 +32,7 @@ async function main() {
       const filtered: IntrospectionResult = {
         ...introspection,
         procedures: introspection.procedures.filter(p =>
-          filters.some(f => p.path === f || p.path.startsWith(`${f}.`))),
+          filters.some(f => matchesPrefix(p.path, f))),
       }
       if (!filtered.procedures.length) {
         const available = introspection.procedures.map(p => p.path).join(', ')
@@ -46,8 +46,22 @@ async function main() {
     // Single procedure: try exact match first
     const proc = introspection.procedures?.find(p => p.path === args.procedure)
     if (!proc) {
-      // Try as prefix filter
-      const filtered = await fetchIntrospection(args.baseUrl, { filter: args.procedure, headers })
+      // Try as prefix filter: server-side first, then client-side fallback
+      let filtered: IntrospectionResult | undefined
+      try {
+        filtered = await fetchIntrospection(args.baseUrl, { filter: args.procedure, headers })
+      }
+      catch {
+        // Server doesn't support prefix filtering (e.g. Fastify) — filter client-side
+      }
+
+      if (!filtered?.procedures?.length) {
+        filtered = {
+          ...introspection,
+          procedures: introspection.procedures.filter(p => matchesPrefix(p.path, args.procedure!)),
+        }
+      }
+
       if (filtered.procedures?.length) {
         outputIntrospection(filtered, args)
         return
@@ -80,6 +94,20 @@ async function main() {
     console.error(`Error: ${error instanceof Error ? error.message : String(error)}`)
     process.exit(1)
   }
+}
+
+/** Match prefix for both tRPC dot paths (`user.getById`) and REST paths (`GET /user/:id`). */
+function matchesPrefix(path: string, prefix: string): boolean {
+  // tRPC: "user.getById" matches prefix "user"
+  if (path === prefix || path.startsWith(`${prefix}.`))
+    return true
+  // REST: "GET /user/:id" matches prefix "user" (check the URL path portion)
+  const spaceIdx = path.indexOf(' ')
+  if (spaceIdx !== -1) {
+    const urlPath = path.slice(spaceIdx + 1)
+    return urlPath === `/${prefix}` || urlPath.startsWith(`/${prefix}/`)
+  }
+  return false
 }
 
 main()

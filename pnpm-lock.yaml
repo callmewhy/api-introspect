@@ -8,6 +8,15 @@ importers:
 
   .:
     devDependencies:
+      '@api-introspect/core':
+        specifier: workspace:*
+        version: link:packages/core
+      '@api-introspect/fastify':
+        specifier: workspace:*
+        version: link:packages/fastify
+      '@api-introspect/trpc':
+        specifier: workspace:*
+        version: link:packages/trpc
       '@sinclair/typebox':
         specifier: ^0.34.48
         version: 0.34.48

@@ -20,6 +20,9 @@
     "test": "vitest run"
   },
   "devDependencies": {
+    "@api-introspect/core": "workspace:*",
+    "@api-introspect/fastify": "workspace:*",
+    "@api-introspect/trpc": "workspace:*",
     "@sinclair/typebox": "^0.34.48",
     "@trpc/server": "^11.12.0",
     "@types/node": "^25.3.5",
