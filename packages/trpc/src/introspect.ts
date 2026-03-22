@@ -1,4 +1,4 @@
-import type { EndpointInfo, IntrospectOptions, JSONSchema, ProcedureType } from '@api-introspect/core'
+import type { EndpointInfo, IntrospectOptions, JSONSchema } from '@api-introspect/core'
 import { compactSchema, isExcludedPath, isIncludedPath } from '@api-introspect/core'
 import type { AnyTRPCRouter } from '@trpc/server'
 import { z } from 'zod'
@@ -23,7 +23,8 @@ interface ProcedureLike {
   _def?: ProcedureDefLike
 }
 
-const PROCEDURE_TYPES = new Set<ProcedureType>(['query', 'mutation', 'subscription'])
+type RpcProcedureType = 'query' | 'mutation' | 'subscription'
+const PROCEDURE_TYPES = new Set<RpcProcedureType>(['query', 'mutation', 'subscription'])
 const schemaCache = new WeakMap<z.ZodType, JSONSchema | undefined>()
 
 export function introspectRouter(
@@ -79,12 +80,12 @@ function getProcedureDef(procedure: unknown) {
   return isRecord(_def) ? (_def as ProcedureDefLike) : undefined
 }
 
-function getProcedureType(type: unknown) {
-  if (typeof type !== 'string' || !PROCEDURE_TYPES.has(type as ProcedureType)) {
+function getProcedureType(type: unknown): RpcProcedureType | undefined {
+  if (typeof type !== 'string' || !PROCEDURE_TYPES.has(type as RpcProcedureType)) {
     return undefined
   }
 
-  return type as ProcedureType
+  return type as RpcProcedureType
 }
 
 function isRecord(value: unknown): value is Record<string, unknown> {
