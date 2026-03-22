@@ -4,15 +4,13 @@ import type { ParsedArgs } from './types'
 
 const HELP = `Usage: api-introspect <base-url> [procedure] [input]
 
-Discover and call tRPC procedures.
+Discover and call API procedures.
 
 IMPORTANT: Always run without [procedure] first to list all available procedures with input schemas. Do not guess procedure names or input shapes -- use the introspection output to determine the correct values.
 
 Arguments:
-  base-url    Base URL of the tRPC server (include path prefix if any)
-  procedure   Procedure path to call (e.g. user.getById), or a path prefix
-              to filter the procedure list (e.g. "user" lists only user.*)
-              Supports multiple prefixes with comma (e.g. "user,post")
+  base-url    Base URL of the server (include path prefix if any)
+  procedure   Procedure path to call (e.g. user.getById or /user/:id)
   input       JSON input (must match the procedure's input schema from introspection)
 
 Options:
@@ -23,8 +21,6 @@ Options:
 
 Examples:
   api-introspect <base-url>                                  List all procedures
-  api-introspect <base-url> user                             Filter by prefix
-  api-introspect <base-url> user,post                        Filter by multiple prefixes
   api-introspect <base-url> user.getById '{"id":1}'          Call a query
   api-introspect <base-url> user.create '{"name":"Alice"}'   Call a mutation
   api-introspect <base-url> -H "Authorization:Bearer token123"`

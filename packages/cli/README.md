@@ -14,19 +14,13 @@ npm install -g api-introspect
 # List all procedures
 api-introspect http://localhost:3000
 
-# Filter by prefix
-api-introspect http://localhost:3000 user
-
-# Filter by multiple prefixes
-api-introspect http://localhost:3000 user,post
-
-# Call a TRPC query
+# Call a tRPC query
 api-introspect http://localhost:3000 user.getById '{"id":1}'
 
-# Call a TRPC mutation
+# Call a tRPC mutation
 api-introspect http://localhost:3000 user.create '{"name":"Alice"}'
 
-# Call a HTTP endpoint
+# Call an HTTP endpoint
 api-introspect http://localhost:3001 '/user/:id' '{"id":1}'
 
 # With auth header
@@ -55,7 +49,6 @@ import { callProcedure, fetchIntrospection } from 'api-introspect'
 
 // Discover endpoints
 const result = await fetchIntrospection('http://localhost:3000', {
-  filter: 'user', // Optional prefix filter
   headers: { Authorization: 'Bearer ...' }, // Optional headers
 })
 
@@ -78,7 +71,6 @@ Fetches introspection metadata from a server.
 | Option    | Type                     | Description                                            |
 | --------- | ------------------------ | ------------------------------------------------------ |
 | `path`    | `string`                 | Introspection endpoint path (default: `'_introspect'`) |
-| `filter`  | `string`                 | Path prefix for server-side filtering                  |
 | `headers` | `Record<string, string>` | Custom HTTP headers                                    |
 
 ### `callProcedure(baseUrl, procedure, options?)`

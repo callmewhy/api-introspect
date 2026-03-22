@@ -17,10 +17,11 @@ Designed for AI agents to autonomously discover and use APIs.
 packages/
   core/       @api-introspect/core     - Framework-agnostic types, compactSchema, path filters
   trpc/       @api-introspect/trpc     - tRPC router introspection (peer deps: @trpc/server, zod)
-  fastify/    @api-introspect/fastify  - Fastify introspection (scaffold, not yet implemented)
+  fastify/    @api-introspect/fastify  - Fastify route introspection (peer dep: fastify)
   cli/        api-introspect           - CLI binary and HTTP client
 examples/
   trpc/       Example tRPC server using @api-introspect/trpc
+  fastify/    Example Fastify server using @api-introspect/fastify
 ```
 
 ## Key Design Decisions
@@ -56,7 +57,7 @@ examples/
 
 - `fetchIntrospection(baseUrl, options?)` - Fetch introspection data via HTTP
 - `callProcedure(baseUrl, procedure, options?)` - Call a procedure via HTTP
-- CLI binary: `api-introspect <base-url> [procedure] [input]`
+- CLI binary: `api-introspect <base-url> [procedure] [input]` (no procedure = list all, with procedure = call it)
 
 ## Commands
 

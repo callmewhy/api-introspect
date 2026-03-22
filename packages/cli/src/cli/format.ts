@@ -17,10 +17,5 @@ export function formatSummary(introspection: IntrospectionResult): string {
     lines.push(`  ${label(p).padEnd(maxLabelLen)}  ${p.path}${desc}`)
   }
 
-  lines.push('')
-  lines.push('Use a path prefix to see full schemas:')
-  lines.push('  api-introspect <url> <prefix>')
-  lines.push('  api-introspect <url> <prefix1>,<prefix2>')
-
   return lines.join('\n')
 }
