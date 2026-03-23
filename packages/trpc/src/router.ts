@@ -9,10 +9,8 @@ import type { IntrospectionRouterOptions } from './types'
 type AnyTRPCRoot = TRPCRootObject<any, any, any, any>
 /* eslint-enable ts/no-explicit-any */
 
-function generateDescription(endpointPath: string, prefixes: string[]): string {
-  const prefixExample = prefixes.length > 0 ? ` (e.g. /${endpointPath}.${prefixes[0]} to list only ${prefixes[0]} procedures)` : ''
-
-  return `tRPC API. Use "npx api-introspect <base-url> [procedure] [input]" to discover and call procedures. Append .<prefix> to this endpoint to filter by path prefix${prefixExample}.`
+function generateDescription(): string {
+  return 'tRPC API. Use "npx api-introspect <base-url> [procedure] [input]" to discover and call procedures.'
 }
 
 function mergeDescription(baseDescription: string, extraDescription: unknown) {
@@ -56,19 +54,8 @@ export function createIntrospectionRouter(
   const procedures = introspectRouter(appRouter, introspectOptions)
   const serializer = serializerOverride ?? detectSerializer(appRouter._def._config)
 
-  // Build sub-routes for every path prefix so multi-level filtering works.
-  // e.g. /_introspect.user, /_introspect.user.profile, /_introspect.user.profile.get
-  const prefixes = new Set<string>()
-  for (const p of procedures) {
-    const parts = p.path.split('.')
-    for (let i = 1; i <= parts.length; i++) {
-      prefixes.add(parts.slice(0, i).join('.'))
-    }
-  }
-
-  const topLevelPrefixes = [...new Set(procedures.map(p => p.path.split('.')[0]).filter(Boolean))]
   const description = mergeDescription(
-    generateDescription(path, topLevelPrefixes),
+    generateDescription(),
     meta?.description,
   )
 
@@ -79,24 +66,9 @@ export function createIntrospectionRouter(
     procedures,
   }
 
-  // eslint-disable-next-line ts/no-explicit-any
-  const routerDef: Record<string, any> = {
+  return t.router({
     [path]: t.procedure.query(() => result),
-  }
-
-  for (const prefix of prefixes) {
-    const filtered = procedures.filter(p => p.path === prefix || p.path.startsWith(`${prefix}.`))
-    const prefixResult: IntrospectionResult = {
-      ...(meta?.name && { name: meta.name }),
-      description,
-      serializer,
-      pathFilter: prefix,
-      procedures: filtered,
-    }
-    routerDef[`${path}.${prefix}`] = t.procedure.query(() => prefixResult)
-  }
-
-  return t.router(routerDef)
+  })
 }
 
 export function withIntrospection<TRouter extends AnyTRPCRouter>(

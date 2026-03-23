@@ -8,8 +8,6 @@ export interface TransformerLike {
 export interface FetchIntrospectionOptions {
   /** Introspection endpoint path (default: `'_introspect'`) */
   path?: string
-  /** Path prefix filter appended to introspection path, e.g. `'user'` fetches `/_introspect.user` */
-  filter?: string
   /** Custom fetch headers */
   headers?: Record<string, string>
 }
@@ -17,6 +15,8 @@ export interface FetchIntrospectionOptions {
 export interface CallProcedureOptions {
   /** Procedure type. Required unless `introspection` is provided for auto-detection. */
   type?: 'query' | 'mutation'
+  /** HTTP method for disambiguating endpoints with the same path (e.g. GET /user vs POST /user). */
+  method?: string
   /** Input data to send */
   input?: unknown
   /** Wire format (default: `'json'`). Use `TransformerLike` for custom transformers. */
@@ -39,15 +39,14 @@ function joinUrl(baseUrl: string, path: string): string {
  * Fetch introspection data from a tRPC server.
  *
  * @param baseUrl - Base URL of the tRPC server, e.g. `http://localhost:3000`
- * @param options - Optional settings for introspection path, prefix filter, and headers
+ * @param options - Optional settings for introspection path and headers
  */
 export async function fetchIntrospection(
   baseUrl: string,
   options: FetchIntrospectionOptions = {},
 ): Promise<IntrospectionResult> {
-  const { path = '_introspect', filter, headers } = options
-  const endpoint = filter ? `${path}.${filter}` : path
-  const url = joinUrl(baseUrl, endpoint)
+  const { path = '_introspect', headers } = options
+  const url = joinUrl(baseUrl, path)
 
   const res = await fetch(url, { headers })
   if (!res.ok) {
@@ -85,9 +84,13 @@ export async function callProcedure(
     if (!introspection?.procedures) {
       throw new Error('Invalid introspection response: missing "procedures" field')
     }
-    const proc = introspection.procedures.find(p => p.path === procedure)
+    const methodHint = options.method?.toUpperCase()
+    const proc = introspection.procedures.find(p =>
+      p.path === procedure && (!methodHint || !('method' in p) || p.method === methodHint))
     if (!proc) {
-      const available = introspection.procedures.map(p => p.path).join(', ')
+      const available = introspection.procedures
+        .map(p => 'method' in p && p.method ? `${p.method} ${p.path}` : p.path)
+        .join(', ')
       throw new Error(`Procedure "${procedure}" not found. Available: ${available}`)
     }
     type ??= proc.type === 'mutation' ? 'mutation' : 'query'

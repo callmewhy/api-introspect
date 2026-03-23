@@ -14,6 +14,7 @@ Arguments:
   input       JSON input (must match the procedure's input schema from introspection)
 
 Options:
+  -X, --method <METHOD>     HTTP method for disambiguating endpoints (e.g. POST)
   -H, --header <key:value>  Custom header (repeatable)
   --summary                 Force summary output format
   --full                    Force full JSON output format
@@ -23,7 +24,8 @@ Examples:
   api-introspect <base-url>                                  List all procedures
   api-introspect <base-url> user.getById '{"id":1}'          Call a query
   api-introspect <base-url> user.create '{"name":"Alice"}'   Call a mutation
-  api-introspect <base-url> -H "Authorization:Bearer token123"`
+  api-introspect <base-url> -H "Authorization:Bearer token123"
+  api-introspect <base-url> -X POST /user '{"name":"Alice"}'   Disambiguate by HTTP method`
 
 export { HELP }
 
@@ -34,6 +36,7 @@ export function parseArgs(argv: string[]): ParsedArgs {
     input: undefined,
     headers: {},
     format: undefined,
+    method: undefined,
   }
 
   const positional: string[] = []
@@ -53,6 +56,16 @@ export function parseArgs(argv: string[]): ParsedArgs {
 
     if (arg === '--full') {
       result.format = 'full'
+      continue
+    }
+
+    if (arg === '-X' || arg === '--method') {
+      const value = argv[++i]
+      if (!value) {
+        console.error('Method requires a value.')
+        process.exit(1)
+      }
+      result.method = value.toUpperCase()
       continue
     }
 

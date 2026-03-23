@@ -82,11 +82,9 @@ describe('meta fields', () => {
     })
 
     const rootData = getResolver(result, '_introspect')() as IntrospectionResult
-    const userData = getResolver(result, '_introspect.user')() as IntrospectionResult
 
     expect(rootData.description).toContain('tRPC API.')
     expect(rootData.description.endsWith('Contact the platform team before using admin procedures.')).toBe(true)
-    expect(userData.description.endsWith('Contact the platform team before using admin procedures.')).toBe(true)
   })
 
   it('returns only serializer and procedures when no meta provided', () => {

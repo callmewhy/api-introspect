@@ -55,8 +55,6 @@ describe('e2e', () => {
     expect(data.serializer).toBe('json')
     expect(data.name).toBe('Test API')
     expect(data.description).toContain('tRPC API')
-    expect(data.pathFilter).toBeUndefined()
-
     const paths = data.procedures.map(e => e.path)
     expect(paths).toContain('user.list')
     expect(paths).toContain('user.create')
@@ -79,20 +77,6 @@ describe('e2e', () => {
     expect(userCreate?.type).toBe('mutation')
     expect(userCreate?.input).toBeDefined()
     expect(userCreate?.input?.type).toBe('object')
-  })
-
-  it('_introspect.user returns only user namespace procedures', async () => {
-    const res = await fetch(`${baseUrl}/_introspect.user`)
-    expect(res.ok).toBe(true)
-
-    const json = await res.json()
-    const data = json.result.data as IntrospectionResult
-
-    expect(data.pathFilter).toBe('user')
-
-    const paths = data.procedures.map(e => e.path)
-    expect(paths).toEqual(['user.list', 'user.create'])
-    expect(paths).not.toContain('health.check')
   })
 
   it('can call a query discovered via introspection', async () => {

@@ -80,12 +80,10 @@ export function introspectRoutes(
   const endpoints: EndpointInfo[] = []
 
   for (const route of routes) {
-    if (includePrefixes.length > 0 && !isIncludedPath(route.url, includePrefixes)) {
+    if (includePrefixes.length > 0 && !isIncludedPath(route.url, includePrefixes))
       continue
-    }
-    if (isExcludedPath(route.url, excludePrefixes)) {
+    if (isExcludedPath(route.url, excludePrefixes))
       continue
-    }
 
     const method = route.method.toUpperCase()
     const description = typeof route.schema?.description === 'string' ? route.schema.description : undefined

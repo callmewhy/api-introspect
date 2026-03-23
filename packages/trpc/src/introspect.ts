@@ -36,12 +36,10 @@ export function introspectRouter(
   const endpoints: EndpointInfo[] = []
 
   for (const [path, procedure] of Object.entries(router._def.procedures ?? {})) {
-    if (includePrefixes.length > 0 && !isIncludedPath(path, includePrefixes)) {
+    if (includePrefixes.length > 0 && !isIncludedPath(path, includePrefixes))
       continue
-    }
-    if (isExcludedPath(path, excludePrefixes)) {
+    if (isExcludedPath(path, excludePrefixes))
       continue
-    }
 
     const def = getProcedureDef(procedure)
     const type = getProcedureType(def?.type)

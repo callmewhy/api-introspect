@@ -4,4 +4,5 @@ export interface ParsedArgs {
   input: string | undefined
   headers: Record<string, string>
   format: 'summary' | 'full' | undefined
+  method: string | undefined
 }

@@ -57,15 +57,6 @@ describe('fetchIntrospection', () => {
     expect(paths).toContain('health.check')
   })
 
-  it('fetches filtered introspection with filter option', async () => {
-    const result = await fetchIntrospection(baseUrl, { filter: 'user' })
-
-    expect(result.pathFilter).toBe('user')
-    const paths = result.procedures.map(p => p.path)
-    expect(paths).toContain('user.list')
-    expect(paths).not.toContain('health.check')
-  })
-
   it('passes custom headers', async () => {
     const result = await fetchIntrospection(baseUrl, { headers: AUTH_HEADERS })
     expect(result.procedures.length).toBeGreaterThan(0)

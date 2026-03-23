@@ -26,6 +26,9 @@ api-introspect http://localhost:3001 '/user/:id' '{"id":1}'
 # With auth header
 api-introspect http://localhost:3000 -H "Authorization:Bearer token"
 
+# Disambiguate by HTTP method (for REST APIs with same path, different methods)
+api-introspect http://localhost:3001 -X POST /user '{"name":"Alice","email":"alice@test.com"}'
+
 # Force output format
 api-introspect http://localhost:3000 --summary
 api-introspect http://localhost:3000 --full
@@ -33,12 +36,13 @@ api-introspect http://localhost:3000 --full
 
 ### Options
 
-| Flag                       | Description                |
-| -------------------------- | -------------------------- |
-| `-H, --header <key:value>` | Custom header (repeatable) |
-| `--summary`                | Force summary format       |
-| `--full`                   | Force full JSON output     |
-| `-h, --help`               | Show help                  |
+| Flag                       | Description                                       |
+| -------------------------- | ------------------------------------------------- |
+| `-X, --method <METHOD>`    | HTTP method to disambiguate endpoints (e.g. POST) |
+| `-H, --header <key:value>` | Custom header (repeatable)                        |
+| `--summary`                | Force summary format                              |
+| `--full`                   | Force full JSON output                            |
+| `-h, --help`               | Show help                                         |
 
 Output auto-selects summary format when there are more than 10 procedures.
 
@@ -80,6 +84,7 @@ Calls a tRPC procedure or REST endpoint.
 | Option          | Type                                       | Description                                         |
 | --------------- | ------------------------------------------ | --------------------------------------------------- |
 | `type`          | `'query' \| 'mutation'`                    | Procedure type (auto-detected if omitted)           |
+| `method`        | `string`                                   | HTTP method to disambiguate same-path endpoints     |
 | `input`         | `unknown`                                  | Input data                                          |
 | `transformer`   | `'json' \| 'superjson' \| TransformerLike` | Wire format (auto-detected)                         |
 | `headers`       | `Record<string, string>`                   | Custom HTTP headers                                 |

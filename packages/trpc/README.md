@@ -74,7 +74,6 @@ interface IntrospectionRouterOptions {
 ## Features
 
 - **Precomputed**: Introspection payload is built at router creation time, not per-request
-- **Prefix sub-routes**: Automatically generates `_introspect.user`, `_introspect.user.profile`, etc. for progressive discovery
 - **Schema conversion**: Zod schemas converted to JSON Schema via `z.toJSONSchema()`
 - **Stacked inputs**: Combines middleware input parsers using `z.intersection()`
 - **Serializer detection**: Auto-detects JSON, SuperJSON, or custom transformers

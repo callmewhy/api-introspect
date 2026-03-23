@@ -36,6 +36,7 @@ async function main() {
 
     const result = await callProcedure(args.baseUrl, args.procedure, {
       input,
+      method: args.method,
       introspection,
       headers,
     })

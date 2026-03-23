@@ -37,10 +37,6 @@ Integration test the CLI by starting both example servers (tRPC and Fastify) and
    - `--summary` flag -- run with `--summary` and verify output is in summary format (compact, no full JSON schemas)
    - `--full` flag -- run with `--full` and verify output includes full JSON Schema details for all procedures
 
-   **Filtering (test on both servers):**
-   - Single prefix filter: e.g., `user` -- verify only user-related procedures returned
-   - Multi-prefix filter: e.g., `user,health` -- verify procedures from both prefixes returned
-
    **Calling procedures (test on both servers):**
    - Call a query with correct input (use introspection to find a query that accepts input)
    - Call a mutation with correct input AND correct auth header (`-H "Authorization:Bearer token"`)
