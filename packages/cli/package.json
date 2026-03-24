@@ -1,7 +1,7 @@
 {
   "name": "api-introspect",
   "type": "module",
-  "version": "0.8.0",
+  "version": "0.9.0",
   "description": "CLI and HTTP client for discovering and calling API procedures via introspection.",
   "license": "MIT",
   "repository": {

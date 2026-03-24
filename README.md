@@ -75,6 +75,7 @@ The introspection endpoint returns:
       "path": "user.create",
       "type": "mutation",
       "description": "Create a new user",
+      "meta": { "auth": true },
       "input": {
         "type": "object",
         "properties": { "name": { "type": "string" } },
@@ -107,6 +108,9 @@ pnpm lint:fix    # lint
 
 ## Changelog
 
+- 0.9.0: Add `meta` field support to route and procedure introspection.
+  Custom metadata (e.g. `auth`, `tags`) from tRPC `.meta()` and Fastify route `config.meta`
+  is now included in the introspection payload.
 - 0.8.0: **Breaking:** Restructure as monorepo with `@api-introspect/core`, `@api-introspect/trpc`,
   `@api-introspect/fastify`, and `api-introspect` (CLI).
   Add Fastify introspection plugin with route and schema extraction.
