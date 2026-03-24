@@ -10,6 +10,7 @@ interface ZodSchemaWithInternalDef {
 
 interface ProcedureMetaLike {
   description?: unknown
+  [key: string]: unknown
 }
 
 interface ProcedureDefLike {
@@ -48,6 +49,7 @@ export function introspectRouter(
     }
 
     const description = getDescription(def.meta)
+    const meta = getMeta(def.meta)
     const input = compactSchema(toInputJSONSchema(def.inputs))
     const output = compactSchema(toJSONSchema(def.output))
 
@@ -55,6 +57,7 @@ export function introspectRouter(
       path,
       type,
       ...(description && { description }),
+      ...(meta && { meta }),
       ...(input && { input }),
       ...(output && { output }),
     })
@@ -67,6 +70,17 @@ function getDescription(meta: ProcedureMetaLike | undefined) {
   return typeof meta?.description === 'string'
     ? meta.description
     : undefined
+}
+
+function getMeta(meta: ProcedureMetaLike | undefined): Record<string, unknown> | undefined {
+  if (!meta || typeof meta !== 'object')
+    return undefined
+
+  const { description: _, ...rest } = meta
+  if (Object.keys(rest).length === 0)
+    return undefined
+
+  return rest
 }
 
 function getProcedureDef(procedure: unknown) {

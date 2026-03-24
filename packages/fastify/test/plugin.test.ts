@@ -162,6 +162,27 @@ describe('introspection plugin', () => {
     expect(body.procedures[0].path).toBe('/api/users')
   })
 
+  it('extracts meta from route config', async () => {
+    app = Fastify()
+    await app.register(introspection)
+
+    app.post('/users', {
+      schema: { description: 'Create a user' },
+      config: { meta: { auth: true } },
+    }, async () => ({}))
+
+    app.get('/users', async () => [])
+
+    const response = await app.inject({ method: 'GET', url: '/_introspect' })
+    const body = JSON.parse(response.body)
+
+    const postRoute = body.procedures.find((p: { method: string }) => p.method === 'POST')
+    const getRoute = body.procedures.find((p: { method: string }) => p.method === 'GET')
+
+    expect(postRoute.meta).toEqual({ auth: true })
+    expect(getRoute).not.toHaveProperty('meta')
+  })
+
   it('sets custom serializer', async () => {
     app = Fastify()
     await app.register(introspection, { serializer: 'superjson' })

@@ -45,10 +45,13 @@ async function introspectionPlugin(
     for (const method of methods) {
       if (SKIP_METHODS.has(method.toUpperCase()))
         continue
+      const routeMeta = (routeOptions.config as Record<string, unknown>)?.meta as Record<string, unknown> | undefined
+
       collected.push({
         method: method.toUpperCase(),
         url: routeOptions.url,
         schema: routeOptions.schema as RouteInfo['schema'],
+        ...(routeMeta && Object.keys(routeMeta).length > 0 && { meta: routeMeta }),
       })
     }
   })

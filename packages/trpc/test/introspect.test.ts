@@ -43,6 +43,48 @@ describe('introspectRouter', () => {
     expect(result[0]?.description).toBe('Get a user by ID')
   })
 
+  it('extracts meta fields excluding description', () => {
+    const router = mockRouter({
+      'user.create': mockProcedure({
+        type: 'mutation',
+        description: 'Create a user',
+        meta: { auth: true, tags: ['users'] },
+      }),
+    })
+
+    const result = introspectRouter(router)
+
+    expect(result[0]?.description).toBe('Create a user')
+    expect(result[0]?.meta).toEqual({ auth: true, tags: ['users'] })
+  })
+
+  it('omits meta when only description is present', () => {
+    const router = mockRouter({
+      'user.get': mockProcedure({
+        type: 'query',
+        description: 'Get a user',
+      }),
+    })
+
+    const result = introspectRouter(router)
+
+    expect(result[0]).not.toHaveProperty('meta')
+  })
+
+  it('extracts meta with real tRPC procedures', () => {
+    const t = initTRPC.meta<{ description?: string, auth?: boolean }>().create()
+    const router = t.router({
+      'user.create': t.procedure
+        .meta({ description: 'Create user', auth: true })
+        .mutation(() => 'ok'),
+    })
+
+    const result = introspectRouter(router)
+
+    expect(result[0]?.description).toBe('Create user')
+    expect(result[0]?.meta).toEqual({ auth: true })
+  })
+
   it('converts input schema to JSON schema', () => {
     const router = mockRouter({
       'user.create': mockProcedure({

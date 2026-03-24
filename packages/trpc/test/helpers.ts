@@ -10,13 +10,18 @@ export function mockProcedure(opts: {
   input?: z.ZodType
   output?: z.ZodType
   description?: string
+  meta?: Record<string, unknown>
 }) {
+  const meta = opts.description || opts.meta
+    ? { ...(opts.description && { description: opts.description }), ...opts.meta }
+    : undefined
+
   return {
     _def: {
       type: opts.type,
       inputs: opts.input ? [opts.input] : [],
       output: opts.output,
-      meta: opts.description ? { description: opts.description } : undefined,
+      meta,
     },
   }
 }

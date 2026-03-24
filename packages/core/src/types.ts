@@ -7,6 +7,7 @@ export type ProcedureType = 'query' | 'mutation' | 'subscription' | 'http'
 interface BaseEndpointInfo {
   path: string
   description?: string
+  meta?: Record<string, unknown>
   input?: JSONSchema
   output?: JSONSchema
 }

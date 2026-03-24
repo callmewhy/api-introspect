@@ -3,8 +3,8 @@ import { describe, expect, it } from 'vitest'
 import type { RouteInfo } from '../src'
 import { introspectRoutes } from '../src'
 
-function route(method: string, url: string, schema?: RouteInfo['schema']): RouteInfo {
-  return { method, url, schema }
+function route(method: string, url: string, schema?: RouteInfo['schema'], meta?: Record<string, unknown>): RouteInfo {
+  return { method, url, schema, ...(meta && { meta }) }
 }
 
 describe('introspectRoutes', () => {
@@ -61,6 +61,27 @@ describe('introspectRoutes', () => {
     const result = introspectRoutes(routes)
 
     expect(result[0]).not.toHaveProperty('description')
+  })
+
+  it('extracts meta from route', () => {
+    const routes = [route('POST', '/users', { description: 'Create user' }, { auth: true })]
+    const result = introspectRoutes(routes)
+
+    expect(result[0]?.meta).toEqual({ auth: true })
+  })
+
+  it('omits meta when not provided', () => {
+    const routes = [route('GET', '/users')]
+    const result = introspectRoutes(routes)
+
+    expect(result[0]).not.toHaveProperty('meta')
+  })
+
+  it('omits meta when empty object', () => {
+    const routes = [route('GET', '/users', undefined, {})]
+    const result = introspectRoutes(routes)
+
+    expect(result[0]).not.toHaveProperty('meta')
   })
 
   it('extracts body schema as input for POST', () => {

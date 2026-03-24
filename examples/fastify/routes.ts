@@ -16,9 +16,7 @@ let nextId = 3
 
 async function requireAuth(request: FastifyRequest) {
   if (!request.headers.authorization?.startsWith('Bearer ')) {
-    const error = new Error('Unauthorized')
-    ;(error as Record<string, unknown>).statusCode = 401
-    throw error
+    throw new Error('Unauthorized')
   }
 }
 
@@ -53,6 +51,7 @@ export const userRoutes: FastifyPluginAsync = async (fastify) => {
       }),
       response: { 201: UserSchema },
     },
+    config: { meta: { auth: true } },
     preHandler: requireAuth,
   }, async (request, reply) => {
     const { name, email } = request.body as { name: string, email: string }
@@ -71,6 +70,7 @@ export const userRoutes: FastifyPluginAsync = async (fastify) => {
       }),
       response: { 200: UserSchema },
     },
+    config: { meta: { auth: true } },
     preHandler: requireAuth,
   }, async (request) => {
     const { id } = request.params as { id: number }
@@ -91,6 +91,7 @@ export const userRoutes: FastifyPluginAsync = async (fastify) => {
       params: Type.Object({ id: Type.Number() }),
       response: { 200: UserSchema },
     },
+    config: { meta: { auth: true } },
     preHandler: requireAuth,
   }, async (request) => {
     const { id } = request.params as { id: number }

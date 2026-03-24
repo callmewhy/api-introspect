@@ -11,6 +11,7 @@ export interface RouteInfo {
     params?: unknown
     response?: Record<string, unknown>
   }
+  meta?: Record<string, unknown>
 }
 
 const QUERY_METHODS = new Set(['GET', 'HEAD', 'OPTIONS'])
@@ -87,6 +88,7 @@ export function introspectRoutes(
 
     const method = route.method.toUpperCase()
     const description = typeof route.schema?.description === 'string' ? route.schema.description : undefined
+    const meta = route.meta && Object.keys(route.meta).length > 0 ? route.meta : undefined
     const input = compactSchema(extractInputSchema(route))
     const output = compactSchema(extractOutputSchema(route))
 
@@ -95,6 +97,7 @@ export function introspectRoutes(
       type: 'http',
       method: method as HttpMethod,
       ...(description && { description }),
+      ...(meta && { meta }),
       ...(input && { input }),
       ...(output && { output }),
     })

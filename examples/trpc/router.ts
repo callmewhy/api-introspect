@@ -4,7 +4,7 @@ import { z } from 'zod'
 
 import type { Context } from './context'
 
-const t = initTRPC.context<Context>().meta<{ description?: string }>().create()
+const t = initTRPC.context<Context>().meta<{ description?: string, auth?: boolean }>().create()
 
 const protectedProcedure = t.procedure.use(({ ctx, next }) => {
   if (!ctx.token)
@@ -36,7 +36,7 @@ const appRouter = t.router({
       }),
 
     create: protectedProcedure
-      .meta({ description: 'Create a new user (requires auth)' })
+      .meta({ description: 'Create a new user (requires auth)', auth: true })
       .input(z.object({ name: z.string(), email: z.string().email() }))
       .mutation(({ input }) => {
         const user = { id: nextId++, ...input }
@@ -45,7 +45,7 @@ const appRouter = t.router({
       }),
 
     update: protectedProcedure
-      .meta({ description: 'Update a user (requires auth)' })
+      .meta({ description: 'Update a user (requires auth)', auth: true })
       .input(z.object({
         id: z.number(),
         name: z.string().optional(),
@@ -63,7 +63,7 @@ const appRouter = t.router({
       }),
 
     delete: protectedProcedure
-      .meta({ description: 'Delete a user (requires auth)' })
+      .meta({ description: 'Delete a user (requires auth)', auth: true })
       .input(z.object({ id: z.number() }))
       .mutation(({ input }) => {
         const idx = users.findIndex(u => u.id === input.id)
