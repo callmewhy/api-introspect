@@ -45,7 +45,10 @@ async function introspectionPlugin(
     for (const method of methods) {
       if (SKIP_METHODS.has(method.toUpperCase()))
         continue
-      const routeMeta = (routeOptions.config as Record<string, unknown>)?.meta as Record<string, unknown> | undefined
+      const config = routeOptions.config as Record<string, unknown> | undefined
+      const rawMeta = config?.meta
+      const isObject = rawMeta && typeof rawMeta === 'object' && !Array.isArray(rawMeta)
+      const routeMeta = isObject ? rawMeta as Record<string, unknown> : undefined
 
       collected.push({
         method: method.toUpperCase(),

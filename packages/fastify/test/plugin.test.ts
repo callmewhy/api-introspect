@@ -183,6 +183,20 @@ describe('introspection plugin', () => {
     expect(getRoute).not.toHaveProperty('meta')
   })
 
+  it('ignores non-object meta in route config', async () => {
+    app = Fastify()
+    await app.register(introspection)
+
+    app.post('/users', {
+      config: { meta: 'invalid' },
+    }, async () => ({}))
+
+    const response = await app.inject({ method: 'GET', url: '/_introspect' })
+    const body = JSON.parse(response.body)
+
+    expect(body.procedures[0]).not.toHaveProperty('meta')
+  })
+
   it('sets custom serializer', async () => {
     app = Fastify()
     await app.register(introspection, { serializer: 'superjson' })
