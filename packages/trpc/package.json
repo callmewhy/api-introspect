@@ -30,6 +30,7 @@
   ],
   "scripts": {
     "build": "tsc --noEmit && tsdown",
+    "dev": "tsdown --watch",
     "clean": "rm -rf dist"
   },
   "peerDependencies": {
