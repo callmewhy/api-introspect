@@ -9,9 +9,10 @@ import type { IntrospectionPluginOptions } from './types'
 const SKIP_METHODS = new Set(['HEAD'])
 
 function generateDescription(description?: string) {
+  const base = 'Fastify HTTP API. Use "npx api-introspect <base-url>" to discover endpoints.'
   return description?.trim()
-    ? description.trim()
-    : 'Fastify HTTP API. Use "npx api-introspect <base-url>" to discover endpoints.'
+    ? `${base} ${description.trim()}`
+    : base
 }
 
 async function introspectionPlugin(

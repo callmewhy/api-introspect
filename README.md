@@ -81,6 +81,13 @@ The introspection endpoint returns:
         "properties": { "name": { "type": "string" } },
         "required": ["name"]
       }
+    },
+    {
+      "path": "/users/:id",
+      "type": "http",
+      "method": "PATCH",
+      "params": { "type": "object", "properties": { "id": { "type": "number" } }, "required": ["id"] },
+      "body": { "type": "object", "properties": { "name": { "type": "string" } } }
     }
   ]
 }
@@ -108,6 +115,12 @@ pnpm lint:fix    # lint
 
 ## Changelog
 
+- 0.10.0: Fastify introspection now returns separate `params`, `query`, and `body` fields
+  instead of a merged `input` field, matching HTTP semantics more precisely.
+  `compactSchema` now strips additional noise keys (`pattern`, `format`, `title`, `default`,
+  `examples`, `$id`) and simplifies `anyOf` with `const` values into `enum`.
+  Core `EndpointInfo` type updated: `HttpEndpointInfo` uses `params`/`query`/`body`,
+  `RpcEndpointInfo` retains `input`.
 - 0.9.0: Add `meta` field support to route and procedure introspection.
   Custom metadata (e.g. `auth`, `tags`) from tRPC `.meta()` and Fastify route `config.meta`
   is now included in the introspection payload.

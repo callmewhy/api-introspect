@@ -1,7 +1,7 @@
 {
   "name": "@api-introspect/fastify",
   "type": "module",
-  "version": "0.9.0",
+  "version": "0.10.0",
   "description": "Fastify route introspection. Discover endpoints and input/output schemas.",
   "license": "MIT",
   "repository": {

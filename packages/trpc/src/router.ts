@@ -10,9 +10,10 @@ type AnyTRPCRoot = TRPCRootObject<any, any, any, any>
 /* eslint-enable ts/no-explicit-any */
 
 function generateDescription(description: unknown): string {
+  const base = 'tRPC API. Use "npx api-introspect <base-url> [procedure] [input]" to discover and call procedures.'
   return typeof description === 'string' && description.trim()
-    ? description.trim()
-    : 'tRPC API. Use "npx api-introspect <base-url> [procedure] [input]" to discover and call procedures.'
+    ? `${base} ${description.trim()}`
+    : base
 }
 
 /**
