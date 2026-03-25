@@ -16,7 +16,9 @@ let nextId = 3
 
 async function requireAuth(request: FastifyRequest) {
   if (!request.headers.authorization?.startsWith('Bearer ')) {
-    throw new Error('Unauthorized')
+    const error = new Error('Unauthorized') as Error & { statusCode: number }
+    error.statusCode = 401
+    throw error
   }
 }
 

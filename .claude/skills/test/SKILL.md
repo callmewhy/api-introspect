@@ -40,11 +40,15 @@ Integration test the CLI by starting both example servers (tRPC and Fastify) and
    **Calling procedures (test on both servers):**
    - Call a query with correct input (use introspection to find a query that accepts input)
    - Call a mutation with correct input AND correct auth header (`-H "Authorization:Bearer token"`)
+     - For Fastify, if the mutation path is shared with a GET endpoint (e.g. `/user` has both GET and POST), use `-X POST` to disambiguate
 
    **Error cases (test on both servers):**
    - Unknown procedure -- verify non-zero exit code and error message
    - Invalid JSON input -- verify non-zero exit code and error message
-   - Missing auth on protected mutation -- verify 401 error
+   - Missing auth on protected mutation -- verify non-zero exit code and error (tRPC returns 401, Fastify may return 500 depending on server error handling)
+
+   **Method disambiguation (Fastify only):**
+   - `-X <METHOD>` flag -- verify that calling a POST endpoint with `-X POST` succeeds when the path overlaps with a GET endpoint
 
 5. Stop both servers:
    ```bash
