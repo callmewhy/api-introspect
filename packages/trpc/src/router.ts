@@ -9,14 +9,10 @@ import type { IntrospectionRouterOptions } from './types'
 type AnyTRPCRoot = TRPCRootObject<any, any, any, any>
 /* eslint-enable ts/no-explicit-any */
 
-function generateDescription(): string {
-  return 'tRPC API. Use "npx api-introspect <base-url> [procedure] [input]" to discover and call procedures.'
-}
-
-function mergeDescription(baseDescription: string, extraDescription: unknown) {
-  return typeof extraDescription === 'string' && extraDescription.trim()
-    ? `${baseDescription} ${extraDescription.trim()}`
-    : baseDescription
+function generateDescription(description: unknown): string {
+  return typeof description === 'string' && description.trim()
+    ? description.trim()
+    : 'tRPC API. Use "npx api-introspect <base-url> [procedure] [input]" to discover and call procedures.'
 }
 
 /**
@@ -54,10 +50,7 @@ export function createIntrospectionRouter(
   const procedures = introspectRouter(appRouter, introspectOptions)
   const serializer = serializerOverride ?? detectSerializer(appRouter._def._config)
 
-  const description = mergeDescription(
-    generateDescription(),
-    meta?.description,
-  )
+  const description = generateDescription(meta?.description)
 
   const result: IntrospectionResult = {
     ...(meta?.name && { name: meta.name }),
