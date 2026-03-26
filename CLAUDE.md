@@ -68,3 +68,6 @@ pnpm build      # pnpm -r build (all packages)
 pnpm lint       # eslint
 pnpm lint:fix   # eslint --fix
 ```
+
+## Guidance
+NEVER modify change logs in-place. The changelog is append-only. It will be generated automatically from git commit history when release is published.
