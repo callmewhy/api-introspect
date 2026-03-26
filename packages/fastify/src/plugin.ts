@@ -7,10 +7,10 @@ import { introspectRoutes } from './introspect'
 import type { IntrospectionPluginOptions } from './types'
 
 const SKIP_METHODS = new Set(['HEAD'])
+const defaultDescription = 'Fastify HTTP API. Use "npx api-introspect <base-url> [endpoint] [input]" to discover and call endpoints.'
 
 function generateDescription(description?: string) {
-  const base = 'Fastify HTTP API. Use "npx api-introspect <base-url> [endpoint] [input]" to discover and call endpoints.'
-  return description?.trim() ? `${base}\n${description.trim()}` : base
+  return description?.trim() ? description.trim() : defaultDescription
 }
 
 async function introspectionPlugin(
