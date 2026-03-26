@@ -1,11 +1,13 @@
 import type { Server } from 'node:http'
 
-import type { IntrospectionResult } from '@api-introspect/core'
+import type { EndpointInfo, IntrospectionResult } from '@api-introspect/core'
 import { withIntrospection } from '@api-introspect/trpc'
 import { initTRPC } from '@trpc/server'
 import { createHTTPServer } from '@trpc/server/adapters/standalone'
 import { afterAll, beforeAll, describe, expect, it } from 'vitest'
 import { z } from 'zod'
+
+type RpcEndpoint = Extract<EndpointInfo, { type: 'query' | 'mutation' | 'subscription' }>
 
 let server: Server
 let baseUrl: string
@@ -55,7 +57,7 @@ describe('e2e', () => {
     expect(data.serializer).toBe('json')
     expect(data.name).toBe('Test API')
     expect(data.description).toContain('tRPC API')
-    const paths = data.procedures.map(e => e.path)
+    const paths = data.procedures!.map(e => e.path)
     expect(paths).toContain('user.list')
     expect(paths).toContain('user.create')
     expect(paths).toContain('health.check')
@@ -67,13 +69,13 @@ describe('e2e', () => {
     const json = await res.json() as { result: { data: IntrospectionResult } }
     const data = json.result.data
 
-    const userList = data.procedures.find(e => e.path === 'user.list')
+    const userList = data.procedures!.find(e => e.path === 'user.list') as RpcEndpoint | undefined
     expect(userList?.type).toBe('query')
     expect(userList?.input).toBeUndefined()
     expect(userList?.output).toBeDefined()
     expect(userList?.output?.type).toBe('array')
 
-    const userCreate = data.procedures.find(e => e.path === 'user.create')
+    const userCreate = data.procedures!.find(e => e.path === 'user.create') as RpcEndpoint | undefined
     expect(userCreate?.type).toBe('mutation')
     expect(userCreate?.input).toBeDefined()
     expect(userCreate?.input?.type).toBe('object')

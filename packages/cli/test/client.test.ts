@@ -51,7 +51,7 @@ describe('fetchIntrospection', () => {
     expect(result.name).toBe('Example API')
     expect(result.serializer).toBe('json')
 
-    const paths = result.procedures.map(p => p.path)
+    const paths = result.procedures!.map(p => p.path)
     expect(paths).toContain('user.list')
     expect(paths).toContain('user.create')
     expect(paths).toContain('health.check')
@@ -59,7 +59,7 @@ describe('fetchIntrospection', () => {
 
   it('passes custom headers', async () => {
     const result = await fetchIntrospection(baseUrl, { headers: AUTH_HEADERS })
-    expect(result.procedures.length).toBeGreaterThan(0)
+    expect(result.procedures!.length).toBeGreaterThan(0)
   })
 })
 

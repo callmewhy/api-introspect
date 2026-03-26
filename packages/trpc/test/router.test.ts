@@ -26,10 +26,10 @@ describe('createIntrospectionRouter', () => {
     const data = getResolver(result, '_introspect')() as IntrospectionResult
     expect(data.serializer).toBe('json')
     expect(data.procedures).toHaveLength(1)
-    expect(data.procedures[0]).toEqual(
+    expect(data.procedures![0]).toEqual(
       expect.objectContaining({ path: 'user.list', type: 'query' }),
     )
-    expect((data.procedures[0]?.output?.items as { type: string }).type).toBe('string')
+    expect((data.procedures![0]?.output?.items as { type: string }).type).toBe('string')
   })
 
   it('uses custom path', () => {
@@ -55,7 +55,7 @@ describe('createIntrospectionRouter', () => {
 
     const data = getResolver(result, '_introspect')() as IntrospectionResult
     expect(data.procedures).toHaveLength(1)
-    expect(data.procedures[0]?.path).toBe('user.list')
+    expect(data.procedures![0]?.path).toBe('user.list')
   })
 
   it('precomputes the introspection payload once during router creation', () => {

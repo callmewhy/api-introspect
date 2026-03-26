@@ -1,7 +1,9 @@
 import { describe, expect, it } from 'vitest'
 
-import type { RouteInfo } from '../src'
+import type { EndpointInfo, RouteInfo } from '../src'
 import { introspectRoutes } from '../src'
+
+type HttpEndpoint = Extract<EndpointInfo, { type: 'http' }>
 
 function route(method: string, url: string, schema?: RouteInfo['schema'], meta?: Record<string, unknown>): RouteInfo {
   return { method, url, schema, ...(meta && { meta }) }
@@ -63,7 +65,7 @@ describe('introspectRoutes', () => {
     })]
     const result = introspectRoutes(routes)
 
-    expect(result[0]?.body).toEqual({
+    expect((result[0] as HttpEndpoint)?.body).toEqual({
       type: 'object',
       properties: { name: { type: 'string' } },
       required: ['name'],
@@ -80,7 +82,7 @@ describe('introspectRoutes', () => {
     })]
     const result = introspectRoutes(routes)
 
-    expect(result[0]?.query).toEqual({
+    expect((result[0] as HttpEndpoint)?.query).toEqual({
       type: 'object',
       properties: { page: { type: 'number' } },
     })
@@ -97,7 +99,7 @@ describe('introspectRoutes', () => {
     })]
     const result = introspectRoutes(routes)
 
-    expect(result[0]?.params).toEqual({
+    expect((result[0] as HttpEndpoint)?.params).toEqual({
       type: 'object',
       properties: { id: { type: 'number' } },
       required: ['id'],
@@ -118,12 +120,12 @@ describe('introspectRoutes', () => {
     })]
     const result = introspectRoutes(routes)
 
-    expect(result[0]?.params).toEqual({
+    expect((result[0] as HttpEndpoint)?.params).toEqual({
       type: 'object',
       properties: { id: { type: 'number' } },
       required: ['id'],
     })
-    expect(result[0]?.body).toEqual({
+    expect((result[0] as HttpEndpoint)?.body).toEqual({
       type: 'object',
       properties: { name: { type: 'string' } },
     })
@@ -178,7 +180,7 @@ describe('introspectRoutes', () => {
     })]
     const result = introspectRoutes(routes)
 
-    expect(result[0]?.body).not.toHaveProperty('additionalProperties')
+    expect((result[0] as HttpEndpoint)?.body).not.toHaveProperty('additionalProperties')
     expect(result[0]?.output).not.toHaveProperty('additionalProperties')
   })
 

@@ -32,7 +32,7 @@
     "dist/**"
   ],
   "scripts": {
-    "build": "tsc --noEmit && tsdown",
+    "build": "tsc -p tsconfig.check.json --noEmit && tsdown",
     "dev": "tsdown --watch --no-clean",
     "clean": "rm -rf dist"
   },

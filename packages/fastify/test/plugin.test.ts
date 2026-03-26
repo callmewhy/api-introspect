@@ -1,3 +1,4 @@
+import type { FastifyInstance } from 'fastify'
 import Fastify from 'fastify'
 import { afterEach, describe, expect, it } from 'vitest'
 
@@ -242,7 +243,7 @@ describe('introspection plugin', () => {
 
   it('does not include introspection route when registered under prefix', async () => {
     app = Fastify()
-    app.register(async (fastify) => {
+    app.register(async (fastify: FastifyInstance) => {
       await fastify.register(introspection, { meta: { name: 'Test' }, path: '/__introspection' })
       fastify.get('/test', async () => 'ok')
     }, { prefix: '/api' })

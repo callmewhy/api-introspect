@@ -1,9 +1,12 @@
+import type { EndpointInfo } from '@api-introspect/core'
 import { initTRPC } from '@trpc/server'
 import { describe, expect, it } from 'vitest'
 import { z } from 'zod'
 
 import { introspectRouter } from '../src'
 import { mockProcedure, mockRouter } from './helpers'
+
+type RpcEndpoint = Extract<EndpointInfo, { type: 'query' | 'mutation' | 'subscription' }>
 
 describe('introspectRouter', () => {
   it('extracts query, mutation, and subscription procedures', () => {
@@ -97,10 +100,11 @@ describe('introspectRouter', () => {
     })
 
     const result = introspectRouter(router)
+    const proc = result[0] as RpcEndpoint | undefined
 
-    expect(result[0]?.input).toBeDefined()
-    expect(result[0]?.input?.type).toBe('object')
-    const properties = result[0]?.input?.properties as Record<string, { type: string }>
+    expect(proc?.input).toBeDefined()
+    expect(proc?.input?.type).toBe('object')
+    const properties = proc?.input?.properties as Record<string, { type: string }>
     expect(properties.name.type).toBe('string')
     expect(properties.age.type).toBe('number')
   })
@@ -115,7 +119,7 @@ describe('introspectRouter', () => {
     })
 
     const result = introspectRouter(router)
-    const input = result[0]?.input as {
+    const input = (result[0] as RpcEndpoint | undefined)?.input as {
       allOf: Array<{
         properties?: Record<string, { type: string }>
       }>
@@ -157,9 +161,10 @@ describe('introspectRouter', () => {
     })
 
     const result = introspectRouter(router)
+    const proc = result[0] as RpcEndpoint | undefined
 
-    expect(result[0]?.input).toBeDefined()
-    const properties = result[0]?.input?.properties as Record<string, Record<string, unknown>>
+    expect(proc?.input).toBeDefined()
+    const properties = proc?.input?.properties as Record<string, Record<string, unknown>>
     expect(properties.date).toEqual({ type: 'string' })
   })
 
@@ -177,9 +182,10 @@ describe('introspectRouter', () => {
     })
 
     const result = introspectRouter(router)
+    const proc = result[0] as RpcEndpoint | undefined
 
-    expect(result[0]?.input).toBeDefined()
-    expect(result[0]?.input?.type).toBe('object')
+    expect(proc?.input).toBeDefined()
+    expect(proc?.input?.type).toBe('object')
   })
 
   it('includes only paths matching include prefixes', () => {
@@ -264,9 +270,10 @@ describe('introspectRouter', () => {
     })
 
     const result = introspectRouter(router)
+    const proc = result[0] as RpcEndpoint | undefined
 
-    expect(result[0]?.input).toBeUndefined()
-    expect(result[0]?.output).toBeUndefined()
+    expect(proc?.input).toBeUndefined()
+    expect(proc?.output).toBeUndefined()
   })
 
   it('returns all endpoints when no exclude option is provided', () => {
@@ -293,7 +300,8 @@ describe('introspectRouter always compacts', () => {
       }),
     })
 
-    const [result] = introspectRouter(router)
+    const [endpoint] = introspectRouter(router)
+    const result = endpoint as RpcEndpoint | undefined
 
     expect(result?.input).not.toHaveProperty('additionalProperties')
     expect(result?.input).toHaveProperty('type', 'object')
@@ -312,7 +320,8 @@ describe('introspectRouter always compacts', () => {
       }),
     })
 
-    const [result] = introspectRouter(router)
+    const [endpoint] = introspectRouter(router)
+    const result = endpoint as RpcEndpoint | undefined
     const props = result?.input?.properties as Record<string, Record<string, unknown>>
 
     expect(props.name).toEqual({ type: ['string', 'null'] })
@@ -327,7 +336,8 @@ describe('introspectRouter always compacts', () => {
         .mutation(({ input }) => input),
     })
 
-    const [result] = introspectRouter(router)
+    const [endpoint] = introspectRouter(router)
+    const result = endpoint as RpcEndpoint | undefined
     const input = result?.input as { allOf: Array<Record<string, unknown>> }
 
     expect(input.allOf).toHaveLength(2)
@@ -340,7 +350,8 @@ describe('introspectRouter always compacts', () => {
       'health.check': mockProcedure({ type: 'query' }),
     })
 
-    const [result] = introspectRouter(router)
+    const [endpoint] = introspectRouter(router)
+    const result = endpoint as RpcEndpoint | undefined
 
     expect(result?.input).toBeUndefined()
     expect(result?.output).toBeUndefined()
