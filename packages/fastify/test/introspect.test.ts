@@ -96,6 +96,7 @@ describe('introspectRoutes', () => {
     })]
     const result = introspectRoutes(routes)
 
+    expect(result[0]?.path).toBe('/users/{id}')
     expect(result[0]?.input).toEqual([{
       in: 'path',
       type: 'object',
@@ -118,6 +119,7 @@ describe('introspectRoutes', () => {
     })]
     const result = introspectRoutes(routes)
 
+    expect(result[0]?.path).toBe('/users/{id}')
     expect(result[0]?.input).toEqual([
       {
         in: 'path',

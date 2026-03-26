@@ -63,7 +63,7 @@ export function introspectRoutes(
     const output = compactSchema(extractOutputSchema(route))
 
     endpoints.push({
-      path: route.url,
+      path: route.url.replace(/:(\w+)/g, '{$1}'),
       type: 'http',
       method: method as HttpMethod,
       ...(description && { description }),
