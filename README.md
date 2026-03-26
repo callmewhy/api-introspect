@@ -78,9 +78,7 @@ The introspection endpoint returns:
       "path": "user.create",
       "type": "mutation",
       "description": "Create a new user",
-      "meta": {
-        "auth": true
-      },
+      "auth": true,
       "input": [
         {
           "in": "body",
@@ -150,6 +148,11 @@ pnpm lint:fix    # lint
 
 ## Changelog
 
+- 0.13.0: Unify input schemas into a single `input` array with `in` field (`'params'`, `'query'`, `'body'`).
+  New `InputSchema` and `InputLocation` types exported from core.
+  Meta fields flattened directly into endpoint objects (no more `meta` wrapper).
+  `compactSchema` now retains `default` values.
+  CLI client routes input by `in` location (params, query, body) when calling HTTP endpoints.
 - 0.12.0: Add `IntrospectionMeta` type with required `name` and extensible fields.
   Meta fields are now flattened directly into the introspection response instead of cherry-picking known keys.
   `IntrospectionResult` uses an index signature for arbitrary top-level fields.
