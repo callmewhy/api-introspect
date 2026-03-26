@@ -2,16 +2,16 @@ import process from 'node:process'
 
 import type { ParsedArgs } from './types'
 
-const HELP = `Usage: api-introspect <base-url> [procedure] [input]
+const HELP = `Usage: api-introspect <base-url> [endpoint] [input]
 
-Discover and call API procedures.
+Discover and call API endpoints.
 
-IMPORTANT: Always run without [procedure] first to list all available procedures with input schemas. Do not guess procedure names or input shapes -- use the introspection output to determine the correct values.
+IMPORTANT: Always run without [endpoint] first to list all available endpoints with input schemas. Do not guess endpoint names or input shapes -- use the introspection output to determine the correct values.
 
 Arguments:
   base-url    Base URL of the server (include path prefix if any)
-  procedure   Procedure path to call (e.g. user.getById or /user/:id)
-  input       JSON input (must match the procedure's input schema from introspection)
+  endpoint    Endpoint to call (tRPC procedure e.g. user.getById, or route e.g. /user/:id)
+  input       JSON input (must match the endpoint's input schema from introspection)
 
 Options:
   -X, --method <METHOD>     HTTP method for disambiguating endpoints (e.g. POST)
@@ -21,11 +21,11 @@ Options:
   -h, --help                Show this help message
 
 Examples:
-  api-introspect <base-url>                                  List all procedures
-  api-introspect <base-url> user.getById '{"id":1}'          Call a query
-  api-introspect <base-url> user.create '{"name":"Alice"}'   Call a mutation
+  api-introspect <base-url>                                  List all endpoints
+  api-introspect <base-url> user.getById '{"id":1}'          Call a tRPC procedure
+  api-introspect <base-url> user.create '{"name":"Alice"}'   Call a tRPC mutation
   api-introspect <base-url> -H "Authorization:Bearer token123"
-  api-introspect <base-url> -X POST /user '{"name":"Alice"}'   Disambiguate by HTTP method`
+  api-introspect <base-url> -X POST /user '{"name":"Alice"}'   Call an HTTP endpoint`
 
 export { HELP }
 
