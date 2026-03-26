@@ -7,6 +7,7 @@ import { introspectRoutes } from './introspect'
 import type { IntrospectionPluginOptions } from './types'
 
 const SKIP_METHODS = new Set(['HEAD'])
+const INTROSPECT_MARKER = '_apiIntrospect'
 
 function generateDescription(description?: string) {
   const base = 'Fastify HTTP API. Use "npx api-introspect <base-url>" to discover endpoints.'
@@ -34,7 +35,8 @@ async function introspectionPlugin(
   let payload: IntrospectionResult | null = null
 
   fastify.addHook('onRoute', (routeOptions) => {
-    if (routeOptions.url === path)
+    const config = routeOptions.config as Record<string, unknown> | undefined
+    if (config?.[INTROSPECT_MARKER])
       return
 
     const methods = Array.isArray(routeOptions.method)
@@ -44,7 +46,6 @@ async function introspectionPlugin(
     for (const method of methods) {
       if (SKIP_METHODS.has(method.toUpperCase()))
         continue
-      const config = routeOptions.config as Record<string, unknown> | undefined
       const rawMeta = config?.meta
       const isObject = rawMeta && typeof rawMeta === 'object' && !Array.isArray(rawMeta)
       const routeMeta = isObject ? rawMeta as Record<string, unknown> : undefined
@@ -58,14 +59,16 @@ async function introspectionPlugin(
     }
   })
 
-  fastify.get(path, async () => {
+  fastify.get(path, { config: { [INTROSPECT_MARKER]: true } }, async () => {
     if (!payload) {
-      const procedures = introspectRoutes(collected, introspectOptions)
+      const endpoints = introspectRoutes(collected, introspectOptions)
       payload = {
         ...(meta?.name && { name: meta.name }),
+        ...(meta?.baseUrl && { baseUrl: meta.baseUrl }),
         description: generateDescription(meta?.description),
+        ...(meta?.auth && { auth: meta.auth }),
         serializer,
-        procedures,
+        endpoints,
       }
     }
     return payload

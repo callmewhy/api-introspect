@@ -7,5 +7,7 @@ export interface IntrospectionRouterOptions<TPath extends string = string> exten
   meta?: {
     name?: string
     description?: string
+    baseUrl?: string
+    auth?: Record<string, unknown>
   }
 }

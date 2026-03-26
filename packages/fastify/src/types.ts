@@ -7,5 +7,7 @@ export interface IntrospectionPluginOptions extends IntrospectOptions {
   meta?: {
     name?: string
     description?: string
+    baseUrl?: string
+    auth?: Record<string, unknown>
   }
 }

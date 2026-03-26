@@ -36,7 +36,10 @@ export type Serializer = 'json' | 'superjson' | 'custom'
 
 export interface IntrospectionResult {
   name?: string
+  baseUrl?: string
   description: string
+  auth?: Record<string, unknown>
   serializer: Serializer
-  procedures: EndpointInfo[]
+  procedures?: EndpointInfo[]
+  endpoints?: EndpointInfo[]
 }

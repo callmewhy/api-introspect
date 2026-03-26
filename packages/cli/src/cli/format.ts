@@ -1,7 +1,7 @@
 import type { IntrospectionResult } from '@api-introspect/core'
 
 export function formatSummary(introspection: IntrospectionResult): string {
-  const procedures = introspection.procedures ?? []
+  const procedures = introspection.endpoints ?? introspection.procedures ?? []
   const lines: string[] = []
 
   if (introspection.name)

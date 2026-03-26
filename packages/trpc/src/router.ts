@@ -55,7 +55,9 @@ export function createIntrospectionRouter(
 
   const result: IntrospectionResult = {
     ...(meta?.name && { name: meta.name }),
+    ...(meta?.baseUrl && { baseUrl: meta.baseUrl }),
     description,
+    ...(meta?.auth && { auth: meta.auth }),
     serializer,
     procedures,
   }

@@ -82,14 +82,15 @@ export async function callProcedure(
   // Auto-detect type/method and transformer from introspection
   if (!type || !transformer) {
     const introspection = options.introspection ?? await fetchIntrospection(baseUrl, { headers })
-    if (!introspection?.procedures) {
-      throw new Error('Invalid introspection response: missing "procedures" field')
+    const procedures = introspection?.endpoints ?? introspection?.procedures
+    if (!procedures) {
+      throw new Error('Invalid introspection response: missing "endpoints" or "procedures" field')
     }
     const methodHint = options.method?.toUpperCase()
-    const proc = introspection.procedures.find(p =>
+    const proc = procedures.find(p =>
       p.path === procedure && (!methodHint || !('method' in p) || p.method === methodHint))
     if (!proc) {
-      const available = introspection.procedures
+      const available = procedures
         .map(p => 'method' in p && p.method ? `${p.method} ${p.path}` : p.path)
         .join(', ')
       throw new Error(`Procedure "${procedure}" not found. Available: ${available}`)

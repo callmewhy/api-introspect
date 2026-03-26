@@ -145,6 +145,6 @@ describe('callProcedure', () => {
         // @ts-expect-error testing invalid introspection
         introspection: {},
       }),
-    ).rejects.toThrow('Invalid introspection response: missing "procedures" field')
+    ).rejects.toThrow('Invalid introspection response: missing "endpoints" or "procedures" field')
   })
 })

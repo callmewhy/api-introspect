@@ -7,7 +7,7 @@ export const SUMMARY_THRESHOLD = 10
 
 export function outputIntrospection(introspection: IntrospectionResult, args: ParsedArgs) {
   const { format } = args
-  const count = introspection.procedures?.length ?? 0
+  const count = (introspection.endpoints ?? introspection.procedures)?.length ?? 0
   const autoSummary = count > SUMMARY_THRESHOLD
   const useSummary = format ? format === 'summary' : autoSummary
 
