@@ -63,9 +63,11 @@ The introspection endpoint returns:
 ```json
 {
   "name": "My API",
+  "baseUrl": "http://localhost:3000",
   "description": "tRPC API...",
+  "auth": { "type": "header", "name": "x-api-key" },
   "serializer": "json",
-  "procedures": [
+  "endpoints": [
     {
       "path": "user.list",
       "type": "query",
@@ -115,6 +117,12 @@ pnpm lint:fix    # lint
 
 ## Changelog
 
+- 0.11.0: Fastify plugin now returns `endpoints` instead of `procedures` in the introspection payload.
+  Add `baseUrl` and `auth` to the `meta` option for both tRPC and Fastify plugins, included
+  in the introspection response when provided. CLI client supports both `endpoints` and
+  `procedures` fields for backward compatibility. Fix default introspection path and URL
+  joining with leading slashes. Fastify plugin uses config marker for self-exclusion,
+  fixing edge cases when registered under a prefix.
 - 0.10.0: Fastify introspection now returns separate `params`, `query`, and `body` fields
   instead of a merged `input` field, matching HTTP semantics more precisely.
   `compactSchema` now strips additional noise keys (`pattern`, `format`, `title`, `default`,
