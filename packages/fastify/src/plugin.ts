@@ -10,7 +10,7 @@ const SKIP_METHODS = new Set(['HEAD'])
 
 function generateDescription(description?: string) {
   const base = 'Fastify HTTP API. Use "npx api-introspect <base-url> [endpoint] [input]" to discover and call endpoints.'
-  return description?.trim() ? description.trim() : base
+  return description?.trim() ? `${base}\n${description.trim()}` : base
 }
 
 async function introspectionPlugin(
@@ -32,6 +32,8 @@ async function introspectionPlugin(
   let payload: IntrospectionResult | null = null
 
   fastify.addHook('onRoute', (routeOptions) => {
+    if (routeOptions.url === path)
+      return
     if (routeOptions.url.split('/').some(s => s.startsWith('_')))
       return
 

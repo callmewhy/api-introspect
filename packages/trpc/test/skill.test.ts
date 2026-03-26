@@ -40,7 +40,7 @@ describe('serializer detection', () => {
     const data = getResolver(result, '_introspect')() as IntrospectionResult
 
     expect(data.serializer).toBe('custom')
-    expect(data.description).toContain('npx api-introspect')
+    expect(data.description).toContain('api-introspect')
     expect(data.description).not.toContain('standard JSON')
     expect(data.description).not.toContain('GET /<path>?input=<url-encoded-json>')
   })

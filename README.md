@@ -49,10 +49,10 @@ await app.register(introspection, {
 ### Discover
 
 ```bash
-# List all procedures
+# List all endpoints
 npx api-introspect http://localhost:3000
 
-# Call a procedure
+# Call an endpoint
 npx api-introspect http://localhost:3000 user.getById '{"id":1}'
 ```
 
@@ -143,6 +143,11 @@ pnpm lint:fix    # lint
 
 ## Changelog
 
+- 0.11.1: Improve default descriptions: tRPC uses "procedures", Fastify uses "endpoints".
+  Custom `meta.description` is now appended to the base description instead of replacing it.
+  CLI help text uses generic "endpoint" terminology covering both tRPC procedures and HTTP routes.
+  CLI summary output uses correct noun ("endpoints" vs "procedures") based on introspection payload.
+  Fix Fastify plugin excluding its own introspection route when using a custom path.
 - 0.11.0: Fastify plugin now returns `endpoints` instead of
   `procedures` in the introspection payload.
   Add `baseUrl` and `auth` to the
@@ -151,7 +156,6 @@ pnpm lint:fix    # lint
   `endpoints` and
   `procedures` fields for backward compatibility.
   Fix default introspection path and URL joining with leading slashes.
-  Fastify plugin uses config marker for self-exclusion, fixing edge cases when registered under a prefix.
 - 0.10.0: Fastify introspection now returns separate `params`, `query`, and
   `body` fields instead of a merged `input` field, matching HTTP semantics more precisely.
   `compactSchema` now strips additional noise keys (`pattern`, `format`, `title`, `default`,
