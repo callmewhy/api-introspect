@@ -81,41 +81,48 @@ The introspection endpoint returns:
       "meta": {
         "auth": true
       },
-      "input": {
-        "type": "object",
-        "properties": {
-          "name": {
-            "type": "string"
-          }
-        },
-        "required": [
-          "name"
-        ]
-      }
+      "input": [
+        {
+          "in": "body",
+          "type": "object",
+          "properties": {
+            "name": {
+              "type": "string"
+            }
+          },
+          "required": [
+            "name"
+          ]
+        }
+      ]
     },
     {
       "path": "/users/:id",
       "type": "http",
       "method": "PATCH",
-      "params": {
-        "type": "object",
-        "properties": {
-          "id": {
-            "type": "number"
-          }
+      "input": [
+        {
+          "in": "params",
+          "type": "object",
+          "properties": {
+            "id": {
+              "type": "number"
+            }
+          },
+          "required": [
+            "id"
+          ]
         },
-        "required": [
-          "id"
-        ]
-      },
-      "body": {
-        "type": "object",
-        "properties": {
-          "name": {
-            "type": "string"
+        {
+          "in": "body",
+          "type": "object",
+          "properties": {
+            "name": {
+              "type": "string"
+            }
           }
         }
-      }
+      ]
     }
   ]
 }

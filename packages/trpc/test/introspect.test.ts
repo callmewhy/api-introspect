@@ -1,12 +1,9 @@
-import type { EndpointInfo } from '@api-introspect/core'
 import { initTRPC } from '@trpc/server'
 import { describe, expect, it } from 'vitest'
 import { z } from 'zod'
 
 import { introspectRouter } from '../src'
 import { mockProcedure, mockRouter } from './helpers'
-
-type RpcEndpoint = Extract<EndpointInfo, { type: 'query' | 'mutation' | 'subscription' }>
 
 describe('introspectRouter', () => {
   it('extracts query, mutation, and subscription procedures', () => {
@@ -88,7 +85,7 @@ describe('introspectRouter', () => {
     expect(result[0]).toMatchObject({ auth: true })
   })
 
-  it('converts input schema to JSON schema', () => {
+  it('converts input schema to JSON schema with in: body', () => {
     const router = mockRouter({
       'user.create': mockProcedure({
         type: 'mutation',
@@ -100,11 +97,12 @@ describe('introspectRouter', () => {
     })
 
     const result = introspectRouter(router)
-    const proc = result[0] as RpcEndpoint | undefined
+    const input = result[0]?.input
 
-    expect(proc?.input).toBeDefined()
-    expect(proc?.input?.type).toBe('object')
-    const properties = proc?.input?.properties as Record<string, { type: string }>
+    expect(input).toHaveLength(1)
+    expect(input![0].in).toBe('body')
+    expect(input![0].type).toBe('object')
+    const properties = input![0].properties as Record<string, { type: string }>
     expect(properties.name.type).toBe('string')
     expect(properties.age.type).toBe('number')
   })
@@ -119,15 +117,16 @@ describe('introspectRouter', () => {
     })
 
     const result = introspectRouter(router)
-    const input = (result[0] as RpcEndpoint | undefined)?.input as {
-      allOf: Array<{
-        properties?: Record<string, { type: string }>
-      }>
-    }
+    const input = result[0]?.input
 
-    expect(input.allOf).toHaveLength(2)
-    expect(input.allOf[0]?.properties?.orgId?.type).toBe('string')
-    expect(input.allOf[1]?.properties?.name?.type).toBe('string')
+    expect(input).toHaveLength(1)
+    expect(input![0].in).toBe('body')
+    const allOf = input![0].allOf as Array<{
+      properties?: Record<string, { type: string }>
+    }>
+    expect(allOf).toHaveLength(2)
+    expect(allOf[0]?.properties?.orgId?.type).toBe('string')
+    expect(allOf[1]?.properties?.name?.type).toBe('string')
   })
 
   it('converts output schema to JSON schema', () => {
@@ -161,10 +160,10 @@ describe('introspectRouter', () => {
     })
 
     const result = introspectRouter(router)
-    const proc = result[0] as RpcEndpoint | undefined
+    const input = result[0]?.input
 
-    expect(proc?.input).toBeDefined()
-    const properties = proc?.input?.properties as Record<string, Record<string, unknown>>
+    expect(input).toHaveLength(1)
+    const properties = input![0].properties as Record<string, Record<string, unknown>>
     expect(properties.date).toEqual({ type: 'string' })
   })
 
@@ -182,10 +181,11 @@ describe('introspectRouter', () => {
     })
 
     const result = introspectRouter(router)
-    const proc = result[0] as RpcEndpoint | undefined
+    const input = result[0]?.input
 
-    expect(proc?.input).toBeDefined()
-    expect(proc?.input?.type).toBe('object')
+    expect(input).toHaveLength(1)
+    expect(input![0].in).toBe('body')
+    expect(input![0].type).toBe('object')
   })
 
   it('includes only paths matching include prefixes', () => {
@@ -270,10 +270,9 @@ describe('introspectRouter', () => {
     })
 
     const result = introspectRouter(router)
-    const proc = result[0] as RpcEndpoint | undefined
 
-    expect(proc?.input).toBeUndefined()
-    expect(proc?.output).toBeUndefined()
+    expect(result[0]?.input).toBeUndefined()
+    expect(result[0]?.output).toBeUndefined()
   })
 
   it('returns all endpoints when no exclude option is provided', () => {
@@ -301,12 +300,12 @@ describe('introspectRouter always compacts', () => {
     })
 
     const [endpoint] = introspectRouter(router)
-    const result = endpoint as RpcEndpoint | undefined
+    const inputEntry = endpoint?.input?.[0]
 
-    expect(result?.input).not.toHaveProperty('additionalProperties')
-    expect(result?.input).toHaveProperty('type', 'object')
-    expect(result?.input).toHaveProperty('required')
-    expect(result?.input).toHaveProperty('properties')
+    expect(inputEntry).not.toHaveProperty('additionalProperties')
+    expect(inputEntry).toHaveProperty('type', 'object')
+    expect(inputEntry).toHaveProperty('required')
+    expect(inputEntry).toHaveProperty('properties')
   })
 
   it('simplifies nullable fields', () => {
@@ -321,8 +320,7 @@ describe('introspectRouter always compacts', () => {
     })
 
     const [endpoint] = introspectRouter(router)
-    const result = endpoint as RpcEndpoint | undefined
-    const props = result?.input?.properties as Record<string, Record<string, unknown>>
+    const props = endpoint?.input?.[0]?.properties as Record<string, Record<string, unknown>>
 
     expect(props.name).toEqual({ type: ['string', 'null'] })
   })
@@ -337,12 +335,11 @@ describe('introspectRouter always compacts', () => {
     })
 
     const [endpoint] = introspectRouter(router)
-    const result = endpoint as RpcEndpoint | undefined
-    const input = result?.input as { allOf: Array<Record<string, unknown>> }
+    const allOf = endpoint?.input?.[0]?.allOf as Array<Record<string, unknown>>
 
-    expect(input.allOf).toHaveLength(2)
-    expect(input.allOf[0]).not.toHaveProperty('additionalProperties')
-    expect(input.allOf[1]).not.toHaveProperty('additionalProperties')
+    expect(allOf).toHaveLength(2)
+    expect(allOf[0]).not.toHaveProperty('additionalProperties')
+    expect(allOf[1]).not.toHaveProperty('additionalProperties')
   })
 
   it('leaves procedures with no input unchanged', () => {
@@ -351,9 +348,8 @@ describe('introspectRouter always compacts', () => {
     })
 
     const [endpoint] = introspectRouter(router)
-    const result = endpoint as RpcEndpoint | undefined
 
-    expect(result?.input).toBeUndefined()
-    expect(result?.output).toBeUndefined()
+    expect(endpoint?.input).toBeUndefined()
+    expect(endpoint?.output).toBeUndefined()
   })
 })

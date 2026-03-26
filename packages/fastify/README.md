@@ -76,7 +76,7 @@ interface IntrospectionPluginOptions {
 - **Lazy evaluation**: Introspection payload computed on first request, then cached
 - **HTTP method mapping**: GET/HEAD/OPTIONS become `query`, POST/PUT/PATCH/DELETE become `mutation`
 - **Schema extraction**: Reads from Fastify's native `schema` system (body, querystring, params, response)
-- **Schema merging**: Combines params + body schemas when both are present
+- **Unified input**: All input schemas use `input` array with `in` field (`'params'`, `'query'`, `'body'`)
 - **Response priority**: Picks response schema by status code (200 > 201 > 202 > 204)
 - **Schema compaction**: Strips noise from JSON Schema for cleaner output
 

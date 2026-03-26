@@ -73,7 +73,8 @@ describe('introspection plugin', () => {
 
     const proc = body.endpoints[0]
     expect(proc.description).toBe('Create a user')
-    expect(proc.body.properties.name.type).toBe('string')
+    expect(proc.input[0].in).toBe('body')
+    expect(proc.input[0].properties.name.type).toBe('string')
     expect(proc.output.properties.id.type).toBe('number')
   })
 

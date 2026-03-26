@@ -1,9 +1,7 @@
 import { describe, expect, it } from 'vitest'
 
-import type { EndpointInfo, RouteInfo } from '../src'
+import type { RouteInfo } from '../src'
 import { introspectRoutes } from '../src'
-
-type HttpEndpoint = Extract<EndpointInfo, { type: 'http' }>
 
 function route(method: string, url: string, schema?: RouteInfo['schema'], meta?: Record<string, unknown>): RouteInfo {
   return { method, url, schema, ...(meta && { meta }) }
@@ -54,7 +52,7 @@ describe('introspectRoutes', () => {
     expect(result[0]).not.toHaveProperty('description')
   })
 
-  it('extracts body schema for POST', () => {
+  it('extracts body schema for POST as input with in: body', () => {
     const routes = [route('POST', '/users', {
       body: {
         type: 'object',
@@ -64,15 +62,15 @@ describe('introspectRoutes', () => {
     })]
     const result = introspectRoutes(routes)
 
-    expect((result[0] as HttpEndpoint)?.body).toEqual({
+    expect(result[0]?.input).toEqual([{
+      in: 'body',
       type: 'object',
       properties: { name: { type: 'string' } },
       required: ['name'],
-    })
-    expect(result[0]).not.toHaveProperty('query')
+    }])
   })
 
-  it('extracts querystring schema for GET', () => {
+  it('extracts querystring schema for GET as input with in: query', () => {
     const routes = [route('GET', '/users', {
       querystring: {
         type: 'object',
@@ -81,14 +79,14 @@ describe('introspectRoutes', () => {
     })]
     const result = introspectRoutes(routes)
 
-    expect((result[0] as HttpEndpoint)?.query).toEqual({
+    expect(result[0]?.input).toEqual([{
+      in: 'query',
       type: 'object',
       properties: { page: { type: 'number' } },
-    })
-    expect(result[0]).not.toHaveProperty('body')
+    }])
   })
 
-  it('extracts params schema separately', () => {
+  it('extracts params schema as input with in: parameter', () => {
     const routes = [route('GET', '/users/:id', {
       params: {
         type: 'object',
@@ -98,14 +96,15 @@ describe('introspectRoutes', () => {
     })]
     const result = introspectRoutes(routes)
 
-    expect((result[0] as HttpEndpoint)?.params).toEqual({
+    expect(result[0]?.input).toEqual([{
+      in: 'params',
       type: 'object',
       properties: { id: { type: 'number' } },
       required: ['id'],
-    })
+    }])
   })
 
-  it('keeps params and body separate for mutation', () => {
+  it('combines params and body as input array', () => {
     const routes = [route('PATCH', '/users/:id', {
       params: {
         type: 'object',
@@ -119,15 +118,19 @@ describe('introspectRoutes', () => {
     })]
     const result = introspectRoutes(routes)
 
-    expect((result[0] as HttpEndpoint)?.params).toEqual({
-      type: 'object',
-      properties: { id: { type: 'number' } },
-      required: ['id'],
-    })
-    expect((result[0] as HttpEndpoint)?.body).toEqual({
-      type: 'object',
-      properties: { name: { type: 'string' } },
-    })
+    expect(result[0]?.input).toEqual([
+      {
+        in: 'params',
+        type: 'object',
+        properties: { id: { type: 'number' } },
+        required: ['id'],
+      },
+      {
+        in: 'body',
+        type: 'object',
+        properties: { name: { type: 'string' } },
+      },
+    ])
   })
 
   it('extracts output as JSON Schema', () => {
@@ -179,7 +182,8 @@ describe('introspectRoutes', () => {
     })]
     const result = introspectRoutes(routes)
 
-    expect((result[0] as HttpEndpoint)?.body).not.toHaveProperty('additionalProperties')
+    const bodyInput = (result[0]?.input as Array<Record<string, unknown>>)?.[0]
+    expect(bodyInput).not.toHaveProperty('additionalProperties')
     expect(result[0]?.output).not.toHaveProperty('additionalProperties')
   })
 
@@ -187,9 +191,7 @@ describe('introspectRoutes', () => {
     const routes = [route('GET', '/health')]
     const result = introspectRoutes(routes)
 
-    expect(result[0]).not.toHaveProperty('params')
-    expect(result[0]).not.toHaveProperty('query')
-    expect(result[0]).not.toHaveProperty('body')
+    expect(result[0]).not.toHaveProperty('input')
     expect(result[0]).not.toHaveProperty('output')
   })
 

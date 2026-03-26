@@ -1,4 +1,4 @@
-import type { EndpointInfo, IntrospectOptions, JSONSchema } from '@api-introspect/core'
+import type { EndpointInfo, InputSchema, IntrospectOptions, JSONSchema } from '@api-introspect/core'
 import { compactSchema, isExcludedPath, isIncludedPath } from '@api-introspect/core'
 import type { AnyTRPCRouter } from '@trpc/server'
 import { z } from 'zod'
@@ -50,7 +50,8 @@ export function introspectRouter(
 
     const description = getDescription(def.meta)
     const meta = getMeta(def.meta)
-    const input = compactSchema(toInputJSONSchema(def.inputs))
+    const inputSchema = compactSchema(toInputJSONSchema(def.inputs))
+    const input = inputSchema ? [{ in: 'body' as const, ...inputSchema }] as InputSchema[] : undefined
     const output = compactSchema(toJSONSchema(def.output))
 
     endpoints.push({

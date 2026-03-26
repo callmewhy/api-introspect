@@ -1,13 +1,11 @@
 import type { Server } from 'node:http'
 
-import type { EndpointInfo, IntrospectionResult } from '@api-introspect/core'
+import type { IntrospectionResult } from '@api-introspect/core'
 import { withIntrospection } from '@api-introspect/trpc'
 import { initTRPC } from '@trpc/server'
 import { createHTTPServer } from '@trpc/server/adapters/standalone'
 import { afterAll, beforeAll, describe, expect, it } from 'vitest'
 import { z } from 'zod'
-
-type RpcEndpoint = Extract<EndpointInfo, { type: 'query' | 'mutation' | 'subscription' }>
 
 let server: Server
 let baseUrl: string
@@ -69,16 +67,17 @@ describe('e2e', () => {
     const json = await res.json() as { result: { data: IntrospectionResult } }
     const data = json.result.data
 
-    const userList = data.procedures!.find(e => e.path === 'user.list') as RpcEndpoint | undefined
+    const userList = data.procedures!.find(e => e.path === 'user.list')
     expect(userList?.type).toBe('query')
     expect(userList?.input).toBeUndefined()
     expect(userList?.output).toBeDefined()
     expect(userList?.output?.type).toBe('array')
 
-    const userCreate = data.procedures!.find(e => e.path === 'user.create') as RpcEndpoint | undefined
+    const userCreate = data.procedures!.find(e => e.path === 'user.create')
     expect(userCreate?.type).toBe('mutation')
-    expect(userCreate?.input).toBeDefined()
-    expect(userCreate?.input?.type).toBe('object')
+    expect(userCreate?.input).toHaveLength(1)
+    expect(userCreate?.input?.[0]?.in).toBe('body')
+    expect(userCreate?.input?.[0]?.type).toBe('object')
   })
 
   it('can call a query discovered via introspection', async () => {

@@ -98,24 +98,58 @@ export async function callProcedure(
     type ??= proc.type === 'mutation' ? 'mutation' : 'query'
     transformer ??= resolveTransformer(introspection.serializer)
 
-    // HTTP endpoint: use method field and substitute path params
+    // HTTP endpoint: use method field and route input by `in` location
     if (proc.type === 'http') {
       let routePath = procedure
+      let query: Record<string, unknown> | undefined
       let body: Record<string, unknown> | undefined
 
       if (input && typeof input === 'object' && !Array.isArray(input)) {
-        const remaining = { ...(input as Record<string, unknown>) }
+        const inputObj = input as Record<string, unknown>
+        const paramKeys = new Set<string>()
+        const queryKeys = new Set<string>()
+
+        // Use introspection input schemas to classify keys by location
+        for (const schema of proc.input ?? []) {
+          const props = schema.properties as Record<string, unknown> | undefined
+          if (!props)
+            continue
+          const keys = Object.keys(props)
+          if (schema.in === 'params')
+            keys.forEach(k => paramKeys.add(k))
+          else if (schema.in === 'query')
+            keys.forEach(k => queryKeys.add(k))
+        }
+
+        // Substitute path params
         routePath = routePath.replace(PATH_PARAM_RE, (_match, param: string) => {
-          const value = remaining[param]
-          delete remaining[param]
-          return String(value ?? '')
+          paramKeys.add(param)
+          return String(inputObj[param] ?? '')
         })
-        if (Object.keys(remaining).length > 0) {
-          body = remaining
+
+        // Route remaining keys by location
+        for (const [key, value] of Object.entries(inputObj)) {
+          if (paramKeys.has(key))
+            continue
+          if (queryKeys.has(key)) {
+            query ??= {}
+            query[key] = value
+          }
+          else {
+            body ??= {}
+            body[key] = value
+          }
         }
       }
 
-      const url = `${baseUrl.replace(TRAILING_SLASHES, '')}${routePath}`
+      let url = `${baseUrl.replace(TRAILING_SLASHES, '')}${routePath}`
+      if (query) {
+        const qs = new URLSearchParams()
+        for (const [k, v] of Object.entries(query))
+          qs.set(k, String(v))
+        url += `?${qs.toString()}`
+      }
+
       const res = await fetch(url, {
         method: proc.method,
         headers: body ? { 'Content-Type': 'application/json', ...headers } : headers,

@@ -4,9 +4,16 @@ export type HttpMethod = 'GET' | 'POST' | 'PUT' | 'PATCH' | 'DELETE' | 'OPTIONS'
 
 export type ProcedureType = 'query' | 'mutation' | 'subscription' | 'http'
 
+export type InputLocation = 'params' | 'query' | 'body'
+
+export interface InputSchema extends JSONSchema {
+  in: InputLocation
+}
+
 interface BaseEndpointInfo {
   path: string
   description?: string
+  input?: InputSchema[]
   output?: JSONSchema
   [key: string]: unknown
 }
@@ -14,15 +21,11 @@ interface BaseEndpointInfo {
 interface RpcEndpointInfo extends BaseEndpointInfo {
   type: 'query' | 'mutation' | 'subscription'
   method?: never
-  input?: JSONSchema
 }
 
 interface HttpEndpointInfo extends BaseEndpointInfo {
   type: 'http'
   method: HttpMethod
-  params?: JSONSchema
-  query?: JSONSchema
-  body?: JSONSchema
 }
 
 export type EndpointInfo = RpcEndpointInfo | HttpEndpointInfo

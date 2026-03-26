@@ -3,6 +3,8 @@ export { isExcludedPath, isIncludedPath } from './filter'
 export type {
   EndpointInfo,
   HttpMethod,
+  InputLocation,
+  InputSchema,
   IntrospectionMeta,
   IntrospectionResult,
   IntrospectOptions,

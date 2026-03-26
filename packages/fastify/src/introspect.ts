@@ -1,4 +1,4 @@
-import type { EndpointInfo, HttpMethod, IntrospectOptions, JSONSchema } from '@api-introspect/core'
+import type { EndpointInfo, HttpMethod, InputLocation, InputSchema, IntrospectOptions, JSONSchema } from '@api-introspect/core'
 import { compactSchema, isExcludedPath, isIncludedPath } from '@api-introspect/core'
 
 export interface RouteInfo {
@@ -55,9 +55,11 @@ export function introspectRoutes(
     const description = typeof route.schema?.description === 'string' ? route.schema.description : undefined
     const meta = route.meta && Object.keys(route.meta).length > 0 ? route.meta : undefined
     const isQuery = QUERY_METHODS.has(method)
-    const params = compactSchema(route.schema?.params as JSONSchema | undefined)
-    const query = isQuery ? compactSchema(route.schema?.querystring as JSONSchema | undefined) : undefined
-    const body = !isQuery ? compactSchema(route.schema?.body as JSONSchema | undefined) : undefined
+    const input = buildInput(
+      compactSchema(route.schema?.params as JSONSchema | undefined),
+      isQuery ? compactSchema(route.schema?.querystring as JSONSchema | undefined) : undefined,
+      !isQuery ? compactSchema(route.schema?.body as JSONSchema | undefined) : undefined,
+    )
     const output = compactSchema(extractOutputSchema(route))
 
     endpoints.push({
@@ -66,12 +68,31 @@ export function introspectRoutes(
       method: method as HttpMethod,
       ...(description && { description }),
       ...meta,
-      ...(params && { params }),
-      ...(query && { query }),
-      ...(body && { body }),
+      ...(input && { input }),
       ...(output && { output }),
     })
   }
 
   return endpoints
+}
+
+function buildInput(
+  params: JSONSchema | undefined,
+  query: JSONSchema | undefined,
+  body: JSONSchema | undefined,
+): InputSchema[] | undefined {
+  const inputs: InputSchema[] = []
+  const sources: [InputLocation, JSONSchema | undefined][] = [
+    ['params', params],
+    ['query', query],
+    ['body', body],
+  ]
+
+  for (const [location, schema] of sources) {
+    if (schema) {
+      inputs.push({ in: location, ...schema })
+    }
+  }
+
+  return inputs.length > 0 ? inputs : undefined
 }
