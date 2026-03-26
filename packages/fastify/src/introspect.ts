@@ -15,6 +15,7 @@ export interface RouteInfo {
 }
 
 const QUERY_METHODS = new Set(['GET', 'HEAD', 'OPTIONS'])
+const PARAM_RE = /:(\w+)/g
 
 function extractOutputSchema(route: RouteInfo): JSONSchema | undefined {
   const response = route.schema?.response
@@ -63,7 +64,7 @@ export function introspectRoutes(
     const output = compactSchema(extractOutputSchema(route))
 
     endpoints.push({
-      path: route.url.replace(/:(\w+)/g, '{$1}'),
+      path: route.url.replace(PARAM_RE, '{$1}'),
       type: 'http',
       method: method as HttpMethod,
       ...(description && { description }),

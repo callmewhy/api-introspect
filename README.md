@@ -95,7 +95,7 @@ The introspection endpoint returns:
       ]
     },
     {
-      "path": "/users/:id",
+      "path": "/users/{id}",
       "type": "http",
       "method": "PATCH",
       "input": [
@@ -148,6 +148,7 @@ pnpm lint:fix    # lint
 
 ## Changelog
 
+- 0.13.3: Fastify introspection now normalizes `:param` path parameters to `{param}` format for consistency with OpenAPI conventions.
 - 0.13.2: `compactSchema` now preserves nullable object/array `anyOf` instead of flattening to `type: [X, "null"]` for better toolchain compatibility.
 - 0.13.1: Rename `InputLocation` value from `'params'` to `'path'` for consistency with OpenAPI conventions.
 - 0.13.0: Unify input schemas into a single `input` array with `in` field (`'path'`, `'query'`, `'body'`).
