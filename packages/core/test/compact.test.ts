@@ -307,6 +307,71 @@ describe('compactSchema', () => {
     })
   })
 
+  it('preserves nullable object anyOf instead of flattening', () => {
+    const schema = {
+      type: 'object',
+      properties: {
+        address: {
+          anyOf: [
+            {
+              type: 'object',
+              properties: { street: { type: 'string' } },
+              required: ['street'],
+              additionalProperties: false,
+            },
+            { type: 'null' },
+          ],
+        },
+      },
+      required: ['address'],
+    }
+
+    expect(compactSchema(schema)).toEqual({
+      type: 'object',
+      properties: {
+        address: {
+          anyOf: [
+            {
+              type: 'object',
+              properties: { street: { type: 'string' } },
+              required: ['street'],
+            },
+            { type: 'null' },
+          ],
+        },
+      },
+      required: ['address'],
+    })
+  })
+
+  it('preserves nullable array anyOf instead of flattening', () => {
+    const schema = {
+      type: 'object',
+      properties: {
+        tags: {
+          anyOf: [
+            { type: 'array', items: { type: 'string' } },
+            { type: 'null' },
+          ],
+        },
+      },
+      required: ['tags'],
+    }
+
+    expect(compactSchema(schema)).toEqual({
+      type: 'object',
+      properties: {
+        tags: {
+          anyOf: [
+            { type: 'array', items: { type: 'string' } },
+            { type: 'null' },
+          ],
+        },
+      },
+      required: ['tags'],
+    })
+  })
+
   it('strips pattern, format, title, examples, $id but keeps default', () => {
     const schema = {
       type: 'object',

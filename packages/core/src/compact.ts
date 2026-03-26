@@ -10,7 +10,8 @@ const STRIP_KEYS = new Set(['pattern', 'format', 'title', 'examples', '$id'])
  *
  * Removed: `additionalProperties: false`, `pattern`, `format`, `title`,
  * `examples`, `$id`, `maximum: MAX_SAFE_INT`.
- * Simplified: nullable `anyOf` → `type: [X, "null"]`, all-const `anyOf` → `enum`.
+ * Simplified: nullable primitive `anyOf` → `type: [X, "null"]`, all-const `anyOf` → `enum`.
+ * Preserved as `anyOf`: nullable object/array types for better toolchain compatibility.
  * Preserved: `type`, `properties`, `required`, `items`, `enum`, `description`,
  * `minimum`, `maximum`, `minLength`, `maxLength`, `exclusiveMinimum`, `exclusiveMaximum`.
  */
@@ -77,6 +78,8 @@ function cleanNode(schema: JSONSchema): JSONSchema {
   return result
 }
 
+const PRIMITIVE_TYPES = new Set(['string', 'number', 'integer', 'boolean'])
+
 function simplifyNullableAnyOf(parts: JSONSchema[]): JSONSchema | null {
   const nonNull = parts.filter(s => s.type !== 'null')
   if (nonNull.length !== 1 || nonNull.length === parts.length)
@@ -85,6 +88,10 @@ function simplifyNullableAnyOf(parts: JSONSchema[]): JSONSchema | null {
   const inner = cleanNode(nonNull[0])
   const type = inner.type
   if (typeof type !== 'string')
+    return null
+
+  // Only simplify primitives; keep anyOf for object/array for better compatibility
+  if (!PRIMITIVE_TYPES.has(type))
     return null
 
   const { type: _, ...rest } = inner
