@@ -49,8 +49,8 @@ describe('e2e', () => {
     const res = await fetch(`${baseUrl}/_introspect`)
     expect(res.ok).toBe(true)
 
-    const json = await res.json()
-    const data = json.result.data as IntrospectionResult
+    const json = await res.json() as { result: { data: IntrospectionResult } }
+    const data = json.result.data
 
     expect(data.serializer).toBe('json')
     expect(data.name).toBe('Test API')
@@ -64,8 +64,8 @@ describe('e2e', () => {
 
   it('_introspect returns correct types for each procedure', async () => {
     const res = await fetch(`${baseUrl}/_introspect`)
-    const json = await res.json()
-    const data = json.result.data as IntrospectionResult
+    const json = await res.json() as { result: { data: IntrospectionResult } }
+    const data = json.result.data
 
     const userList = data.procedures.find(e => e.path === 'user.list')
     expect(userList?.type).toBe('query')
@@ -83,8 +83,8 @@ describe('e2e', () => {
     const res = await fetch(`${baseUrl}/user.list`)
     expect(res.ok).toBe(true)
 
-    const json = await res.json()
-    const users = json.result.data as Array<{ id: number, name: string }>
+    const json = await res.json() as { result: { data: Array<{ id: number, name: string }> } }
+    const users = json.result.data
 
     expect(users).toEqual([{ id: 1, name: 'Alice' }])
   })
@@ -97,8 +97,8 @@ describe('e2e', () => {
     })
     expect(res.ok).toBe(true)
 
-    const json = await res.json()
-    const user = json.result.data as { id: number, name: string }
+    const json = await res.json() as { result: { data: { id: number, name: string } } }
+    const user = json.result.data
 
     expect(user.name).toBe('Bob')
   })

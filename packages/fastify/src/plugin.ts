@@ -9,8 +9,10 @@ import type { IntrospectionPluginOptions } from './types'
 const SKIP_METHODS = new Set(['HEAD'])
 const defaultDescription = 'Fastify HTTP API. Use "npx api-introspect <base-url> [endpoint] [input]" to discover and call endpoints.'
 
-function generateDescription(description?: string) {
-  return description?.trim() ? description.trim() : defaultDescription
+function generateDescription(description: unknown): string {
+  return typeof description === 'string' && description.trim()
+    ? description.trim()
+    : defaultDescription
 }
 
 async function introspectionPlugin(
@@ -57,21 +59,21 @@ async function introspectionPlugin(
     }
   })
 
-  let precomputed: Omit<IntrospectionResult, 'baseUrl'> | null = null
+  const { description: metaDescription, ...restMeta } = meta ?? {} as Record<string, unknown>
 
-  fastify.get(path, async (request) => {
+  let precomputed: IntrospectionResult | null = null
+
+  fastify.get(path, async () => {
     if (!precomputed) {
       const endpoints = introspectRoutes(collected, introspectOptions)
       precomputed = {
-        ...(meta?.name && { name: meta.name }),
-        description: generateDescription(meta?.description),
-        ...(meta?.auth && { auth: meta.auth }),
+        ...restMeta,
+        description: generateDescription(metaDescription),
         serializer,
         endpoints,
       }
     }
-    const baseUrl = meta?.baseUrl ?? `${request.protocol}://${request.host}`
-    return { baseUrl, ...precomputed }
+    return precomputed
   })
 }
 

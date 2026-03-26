@@ -9,7 +9,7 @@ import { getResolver } from './helpers'
 describe('serializer detection', () => {
   it('defaults to json serializer', () => {
     const t = initTRPC.create()
-    const result = createIntrospectionRouter(t, t.router({}))
+    const result = createIntrospectionRouter(t, t.router({}), { meta: { name: 'Test' } })
     const data = getResolver(result, '_introspect')() as IntrospectionResult
 
     expect(data.serializer).toBe('json')
@@ -23,7 +23,7 @@ describe('serializer detection', () => {
       },
     })
     const appRouter = t.router({}) as AnyTRPCRouter
-    const result = createIntrospectionRouter(t, appRouter)
+    const result = createIntrospectionRouter(t, appRouter, { meta: { name: 'Test' } })
     const data = getResolver(result, '_introspect')() as IntrospectionResult
 
     expect(data.serializer).toBe('superjson')
@@ -36,7 +36,7 @@ describe('serializer detection', () => {
         deserialize: (v: unknown) => v,
       },
     })
-    const result = createIntrospectionRouter(t, t.router({}))
+    const result = createIntrospectionRouter(t, t.router({}), { meta: { name: 'Test' } })
     const data = getResolver(result, '_introspect')() as IntrospectionResult
 
     expect(data.serializer).toBe('custom')
@@ -47,7 +47,7 @@ describe('serializer detection', () => {
 
   it('allows manual serializer override', () => {
     const t = initTRPC.create()
-    const result = createIntrospectionRouter(t, t.router({}), { serializer: 'superjson' })
+    const result = createIntrospectionRouter(t, t.router({}), { meta: { name: 'Test' }, serializer: 'superjson' })
     const data = getResolver(result, '_introspect')() as IntrospectionResult
 
     expect(data.serializer).toBe('superjson')
@@ -77,6 +77,7 @@ describe('meta fields', () => {
     })
     const result = createIntrospectionRouter(t, appRouter, {
       meta: {
+        name: 'Admin API',
         description: 'Contact the platform team before using admin procedures.',
       },
     })
@@ -86,11 +87,14 @@ describe('meta fields', () => {
     expect(rootData.description).toBe('Contact the platform team before using admin procedures.')
   })
 
-  it('returns only serializer and procedures when no meta provided', () => {
+  it('flattens all meta fields into the response', () => {
     const t = initTRPC.create()
-    const result = createIntrospectionRouter(t, t.router({}))
+    const result = createIntrospectionRouter(t, t.router({}), {
+      meta: { name: 'Test', baseUrl: 'http://localhost:3000', custom: 'value' },
+    })
     const data = getResolver(result, '_introspect')() as IntrospectionResult
 
-    expect(Object.keys(data)).toEqual(['baseUrl', 'description', 'serializer', 'procedures'])
+    expect(Object.keys(data)).toEqual(['name', 'baseUrl', 'custom', 'description', 'serializer', 'procedures'])
+    expect(data.name).toBe('Test')
   })
 })

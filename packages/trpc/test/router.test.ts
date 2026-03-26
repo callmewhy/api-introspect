@@ -19,7 +19,7 @@ describe('createIntrospectionRouter', () => {
       }),
     })
 
-    const result = createIntrospectionRouter(t, appRouter)
+    const result = createIntrospectionRouter(t, appRouter, { meta: { name: 'Test' } })
 
     expect(result._def.procedures).toHaveProperty('_introspect')
 
@@ -34,7 +34,7 @@ describe('createIntrospectionRouter', () => {
 
   it('uses custom path', () => {
     const t = initTRPC.create()
-    const result = createIntrospectionRouter(t, t.router({}), { path: 'schema' })
+    const result = createIntrospectionRouter(t, t.router({}), { meta: { name: 'Test' }, path: 'schema' })
 
     expect(result._def.procedures).toHaveProperty('schema')
     expect(result._def.procedures).not.toHaveProperty('_introspect')
@@ -51,7 +51,7 @@ describe('createIntrospectionRouter', () => {
       }),
     })
 
-    const result = createIntrospectionRouter(t, appRouter, { exclude: ['admin.'] })
+    const result = createIntrospectionRouter(t, appRouter, { meta: { name: 'Test' }, exclude: ['admin.'] })
 
     const data = getResolver(result, '_introspect')() as IntrospectionResult
     expect(data.procedures).toHaveLength(1)
@@ -73,7 +73,7 @@ describe('createIntrospectionRouter', () => {
     })
 
     const t = initTRPC.create()
-    const result = createIntrospectionRouter(t, appRouter)
+    const result = createIntrospectionRouter(t, appRouter, { meta: { name: 'Test' } })
 
     expect(inputAccessCount).toBe(1)
 
@@ -91,7 +91,7 @@ describe('createIntrospectionRouter', () => {
       }),
     })
 
-    const result = createIntrospectionRouter(t, appRouter, { enabled: false })
+    const result = createIntrospectionRouter(t, appRouter, { meta: { name: 'Test' }, enabled: false })
 
     expect(result._def.procedures).toEqual({})
   })
@@ -106,7 +106,7 @@ describe('withIntrospection', () => {
       }),
     })
 
-    const result = withIntrospection(t, appRouter)
+    const result = withIntrospection(t, appRouter, { meta: { name: 'Test' } })
 
     expect(result._def.procedures).toHaveProperty('user.list')
     expect(result._def.procedures).toHaveProperty('_introspect')
@@ -118,6 +118,6 @@ describe('withIntrospection', () => {
       _introspect: t.procedure.query(() => 'reserved'),
     })
 
-    expect(() => withIntrospection(t, appRouter)).toThrowError(duplicateIntrospectionPathError)
+    expect(() => withIntrospection(t, appRouter, { meta: { name: 'Test' } })).toThrowError(duplicateIntrospectionPathError)
   })
 })

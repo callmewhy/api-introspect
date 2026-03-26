@@ -5,7 +5,6 @@ export type {
   IntrospectionPluginOptions,
 } from './types'
 export type {
-  AuthInfo,
   EndpointInfo,
   IntrospectionMeta,
   IntrospectionResult,

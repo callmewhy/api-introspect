@@ -52,13 +52,11 @@ export function createIntrospectionRouter(
   const procedures = introspectRouter(appRouter, introspectOptions)
   const serializer = serializerOverride ?? detectSerializer(appRouter._def._config)
 
-  const description = generateDescription(meta?.description)
+  const { description: metaDescription, ...restMeta } = meta ?? {} as Record<string, unknown>
 
   const result: IntrospectionResult = {
-    ...(meta?.name && { name: meta.name }),
-    baseUrl: meta?.baseUrl ?? '',
-    description,
-    ...(meta?.auth && { auth: meta.auth }),
+    ...restMeta,
+    description: generateDescription(metaDescription),
     serializer,
     procedures,
   }

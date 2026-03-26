@@ -29,7 +29,7 @@ describe('introspection plugin', () => {
 
   it('captures routes registered via plugins', async () => {
     app = Fastify()
-    app.register(introspection)
+    app.register(introspection, { meta: { name: 'Test' } })
 
     app.register(async (fastify: ReturnType<typeof Fastify>) => {
       fastify.get('/', async () => 'list')
@@ -48,7 +48,7 @@ describe('introspection plugin', () => {
 
   it('extracts schemas from routes', async () => {
     app = Fastify()
-    await app.register(introspection)
+    await app.register(introspection, { meta: { name: 'Test' } })
 
     app.post('/users', {
       schema: {
@@ -78,7 +78,7 @@ describe('introspection plugin', () => {
 
   it('skips HEAD routes', async () => {
     app = Fastify()
-    await app.register(introspection)
+    await app.register(introspection, { meta: { name: 'Test' } })
     app.get('/test', async () => 'ok')
 
     const response = await app.inject({ method: 'GET', url: '/_introspect' })
@@ -92,7 +92,7 @@ describe('introspection plugin', () => {
 
   it('does not include introspection route itself', async () => {
     app = Fastify()
-    await app.register(introspection)
+    await app.register(introspection, { meta: { name: 'Test' } })
     app.get('/test', async () => 'ok')
 
     const response = await app.inject({ method: 'GET', url: '/_introspect' })
@@ -104,7 +104,7 @@ describe('introspection plugin', () => {
 
   it('uses custom path', async () => {
     app = Fastify()
-    await app.register(introspection, { path: '/api/docs' })
+    await app.register(introspection, { meta: { name: 'Test' }, path: '/api/docs' })
     app.get('/test', async () => 'ok')
 
     const response = await app.inject({ method: 'GET', url: '/api/docs' })
@@ -116,7 +116,7 @@ describe('introspection plugin', () => {
 
   it('does nothing when disabled', async () => {
     app = Fastify()
-    await app.register(introspection, { enabled: false })
+    await app.register(introspection, { meta: { name: 'Test' }, enabled: false })
     app.get('/test', async () => 'ok')
 
     const response = await app.inject({ method: 'GET', url: '/_introspect' })
@@ -125,7 +125,7 @@ describe('introspection plugin', () => {
 
   it('includes description from meta', async () => {
     app = Fastify()
-    await app.register(introspection, { meta: { description: 'My custom API' } })
+    await app.register(introspection, { meta: { name: 'Test', description: 'My custom API' } })
 
     const response = await app.inject({ method: 'GET', url: '/_introspect' })
     const body = JSON.parse(response.body)
@@ -135,7 +135,7 @@ describe('introspection plugin', () => {
 
   it('applies include filter', async () => {
     app = Fastify()
-    await app.register(introspection, { include: ['/api'] })
+    await app.register(introspection, { meta: { name: 'Test' }, include: ['/api'] })
     app.get('/api/users', async () => [])
     app.get('/health', async () => 'ok')
 
@@ -148,7 +148,7 @@ describe('introspection plugin', () => {
 
   it('applies exclude filter', async () => {
     app = Fastify()
-    await app.register(introspection, { exclude: ['/health'] })
+    await app.register(introspection, { meta: { name: 'Test' }, exclude: ['/health'] })
     app.get('/api/users', async () => [])
     app.get('/health', async () => 'ok')
 
@@ -161,7 +161,7 @@ describe('introspection plugin', () => {
 
   it('extracts meta from route config', async () => {
     app = Fastify()
-    await app.register(introspection)
+    await app.register(introspection, { meta: { name: 'Test' } })
 
     app.post('/users', {
       schema: { description: 'Create a user' },
@@ -182,7 +182,7 @@ describe('introspection plugin', () => {
 
   it('ignores non-object meta in route config', async () => {
     app = Fastify()
-    await app.register(introspection)
+    await app.register(introspection, { meta: { name: 'Test' } })
 
     app.post('/users', {
       config: { meta: 'invalid' },
@@ -196,7 +196,7 @@ describe('introspection plugin', () => {
 
   it('sets custom serializer', async () => {
     app = Fastify()
-    await app.register(introspection, { serializer: 'superjson' })
+    await app.register(introspection, { meta: { name: 'Test' }, serializer: 'superjson' })
 
     const response = await app.inject({ method: 'GET', url: '/_introspect' })
     const body = JSON.parse(response.body)
@@ -206,7 +206,7 @@ describe('introspection plugin', () => {
 
   it('includes baseUrl from meta', async () => {
     app = Fastify()
-    await app.register(introspection, { meta: { baseUrl: 'http://localhost:3001' } })
+    await app.register(introspection, { meta: { name: 'Test', baseUrl: 'http://localhost:3001' } })
 
     const response = await app.inject({ method: 'GET', url: '/_introspect' })
     const body = JSON.parse(response.body)
@@ -218,6 +218,7 @@ describe('introspection plugin', () => {
     app = Fastify()
     await app.register(introspection, {
       meta: {
+        name: 'Test',
         auth: { type: 'header', name: 'x-api-key', description: 'API key' },
       },
     })
@@ -228,21 +229,21 @@ describe('introspection plugin', () => {
     expect(body.auth).toEqual({ type: 'header', name: 'x-api-key', description: 'API key' })
   })
 
-  it('infers baseUrl and omits auth when not provided', async () => {
+  it('omits baseUrl and auth when not provided', async () => {
     app = Fastify()
-    await app.register(introspection)
+    await app.register(introspection, { meta: { name: 'Test' } })
 
     const response = await app.inject({ method: 'GET', url: '/_introspect' })
     const body = JSON.parse(response.body)
 
-    expect(body.baseUrl).toBe('http://localhost:80')
+    expect(body).not.toHaveProperty('baseUrl')
     expect(body).not.toHaveProperty('auth')
   })
 
   it('does not include introspection route when registered under prefix', async () => {
     app = Fastify()
     app.register(async (fastify) => {
-      await fastify.register(introspection, { path: '/__introspection' })
+      await fastify.register(introspection, { meta: { name: 'Test' }, path: '/__introspection' })
       fastify.get('/test', async () => 'ok')
     }, { prefix: '/api' })
 
