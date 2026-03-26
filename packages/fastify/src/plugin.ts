@@ -75,7 +75,7 @@ async function introspectionPlugin(
   })
 }
 
-export const introspection = fp(introspectionPlugin, {
+export const introspection = fp<IntrospectionPluginOptions>(introspectionPlugin, {
   name: '@api-introspect/fastify',
   fastify: '>=4.0.0',
 })
