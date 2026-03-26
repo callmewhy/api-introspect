@@ -143,6 +143,9 @@ pnpm lint:fix    # lint
 
 ## Changelog
 
+- 0.12.0: Add `IntrospectionMeta` type with required `name` and extensible fields.
+  Meta fields are now flattened directly into the introspection response instead of cherry-picking known keys.
+  `IntrospectionResult` uses an index signature for arbitrary top-level fields.
 - 0.11.2: Custom `meta.description` now replaces the default description instead of appending to it.
 - 0.11.1: Improve default descriptions: tRPC uses "procedures", Fastify uses "endpoints".
   CLI help text uses generic "endpoint" terminology covering both tRPC procedures and HTTP routes.
