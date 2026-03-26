@@ -7,13 +7,10 @@ import { introspectRoutes } from './introspect'
 import type { IntrospectionPluginOptions } from './types'
 
 const SKIP_METHODS = new Set(['HEAD'])
-const INTROSPECT_MARKER = '_apiIntrospect'
 
 function generateDescription(description?: string) {
   const base = 'Fastify HTTP API. Use "npx api-introspect <base-url>" to discover endpoints.'
-  return description?.trim()
-    ? `${base} ${description.trim()}`
-    : base
+  return description?.trim() ? description.trim() : base
 }
 
 async function introspectionPlugin(
@@ -35,10 +32,10 @@ async function introspectionPlugin(
   let payload: IntrospectionResult | null = null
 
   fastify.addHook('onRoute', (routeOptions) => {
-    const config = routeOptions.config as Record<string, unknown> | undefined
-    if (config?.[INTROSPECT_MARKER])
+    if (routeOptions.url.split('/').some(s => s.startsWith('_')))
       return
 
+    const config = routeOptions.config as Record<string, unknown> | undefined
     const methods = Array.isArray(routeOptions.method)
       ? routeOptions.method
       : [routeOptions.method]
@@ -59,7 +56,7 @@ async function introspectionPlugin(
     }
   })
 
-  fastify.get(path, { config: { [INTROSPECT_MARKER]: true } }, async () => {
+  fastify.get(path, async () => {
     if (!payload) {
       const endpoints = introspectRoutes(collected, introspectOptions)
       payload = {
