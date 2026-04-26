@@ -34,6 +34,12 @@ npx api-introspect info http://localhost:3002/openapi.json --path /pets/{id} --m
 # Call an endpoint (baseUrl comes from spec.servers[0].url)
 npx api-introspect call http://localhost:3002/openapi.json --path /pets --method POST --input '{"name":"Buddy"}'
 npx api-introspect call http://localhost:3002/openapi.json --path /pets/{id} --method DELETE --input '{"id":1}'
+
+# Override the base URL when the spec is hosted apart from the API
+# (e.g. spec on a docs site, but you want to hit a local dev server)
+npx api-introspect call https://docs.example.com/openapi.json \
+  --path /pets --method GET \
+  --base-url http://localhost:3002
 ```
 
 ## What This Demonstrates
@@ -41,4 +47,5 @@ npx api-introspect call http://localhost:3002/openapi.json --path /pets/{id} --m
 - Auto-detection of OpenAPI / Swagger documents by `loadSource`
 - `$ref` resolution against `components.schemas`
 - Path-level parameters inherited into each operation
-- Using `servers[0].url` from the spec as the call base URL
+- Using `servers[0].url` from the spec as the call base URL (relative URLs are resolved against the spec URL per the OpenAPI spec)
+- `--base-url` to override when the spec and API live in different places

@@ -40,7 +40,7 @@ export async function loadSource(
       const introspection = openAPIToIntrospection(openapi)
       return {
         introspection,
-        baseUrl: openapi.servers?.[0]?.url?.trim() || originOf(url),
+        baseUrl: resolveServerUrl(openapi.servers?.[0]?.url, url),
         kind: 'openapi',
       }
     }
@@ -124,6 +124,19 @@ function originOf(url: string): string {
   }
   catch {
     return url.replace(TRAILING_SLASHES, '')
+  }
+}
+
+// Per OpenAPI spec, `servers[i].url` may be relative — resolve it against the spec URL.
+function resolveServerUrl(serverUrl: string | undefined, specUrl: string): string {
+  const trimmed = serverUrl?.trim()
+  if (!trimmed)
+    return originOf(specUrl)
+  try {
+    return new URL(trimmed, specUrl).toString().replace(TRAILING_SLASHES, '')
+  }
+  catch {
+    return originOf(specUrl)
   }
 }
 

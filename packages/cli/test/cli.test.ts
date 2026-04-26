@@ -48,6 +48,20 @@ describe('parseArgs', () => {
     expect(args.method).toBe('POST')
   })
 
+  it('parses --base-url override', () => {
+    const args = parseArgs([
+      'call',
+      'https://docs.example.com/openapi.json',
+      '--path',
+      '/pets',
+      '--method',
+      'GET',
+      '--base-url',
+      'http://localhost:3002',
+    ])
+    expect(args.baseUrl).toBe('http://localhost:3002')
+  })
+
   it('parses repeated --header flags', () => {
     const args = parseArgs([
       'list',

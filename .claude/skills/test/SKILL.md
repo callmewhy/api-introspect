@@ -70,6 +70,9 @@ Integration test the CLI by starting all three example servers (tRPC, Fastify, O
    **Auto-detection (OpenAPI specifically):**
    - Confirm `list http://localhost:3002/openapi.json` succeeds without any `--openapi`-style flag.
    - Confirm the `baseUrl` used for `call` is `spec.servers[0].url` -- a successful POST to `/pets` proves this.
+   - Confirm `--base-url <url>` overrides the spec's baseUrl.
+     Cleanest test: run `call <spec-url> --path /pets --method POST --base-url http://127.0.0.1:65535 --input '{"name":"X"}'` and verify it fails with "fetch failed" (connection refused) instead of succeeding on `localhost:3002`.
+     Without override the same call would succeed; with override it must try the closed port.
 
    **Error cases (all three where applicable):**
    - Unknown endpoint: `info <url> --path /missing` -- verify non-zero exit and "Endpoint not found" message.

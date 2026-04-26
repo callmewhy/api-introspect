@@ -97,6 +97,20 @@ describe('loadSource', () => {
     expect(result.kind).toBe('openapi')
   })
 
+  it('resolves a relative servers[0].url against the spec URL', async () => {
+    mockFetchByUrl({
+      'https://api.example.com/docs/openapi.json': {
+        openapi: '3.0.0',
+        info: { title: 'X' },
+        servers: [{ url: '/v2' }],
+        paths: {},
+      },
+    })
+
+    const result = await loadSource('https://api.example.com/docs/openapi.json')
+    expect(result.baseUrl).toBe('https://api.example.com/v2')
+  })
+
   it('falls back to URL origin when servers is missing', async () => {
     mockFetchByUrl({
       'https://api.example.com/openapi.json': {

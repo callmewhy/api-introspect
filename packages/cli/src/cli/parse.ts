@@ -8,6 +8,7 @@ export interface ParsedArgs {
   path: string | undefined
   method: string | undefined
   input: string | undefined
+  baseUrl: string | undefined
   headers: Record<string, string>
 }
 
@@ -31,6 +32,8 @@ Options:
   --path <p>                Endpoint path (tRPC: e.g. user.getById, HTTP: /users/{id})
   --method <M>, -X <M>      HTTP method to disambiguate same-path endpoints
   --input <json>            JSON input for "call"
+  --base-url <url>          Override the base URL used by "call"
+                            (useful when an OpenAPI spec is hosted apart from the API)
   --header <key:value>, -H  Custom header (repeatable)
   -h, --help                Show this help message
 
@@ -66,6 +69,7 @@ export function parseArgs(argv: string[]): ParsedArgs {
     path: undefined,
     method: undefined,
     input: undefined,
+    baseUrl: undefined,
     headers: {},
   }
 
@@ -91,6 +95,11 @@ export function parseArgs(argv: string[]): ParsedArgs {
 
     if (arg === '--input') {
       result.input = takeValue(rest, ++i, '--input')
+      continue
+    }
+
+    if (arg === '--base-url') {
+      result.baseUrl = takeValue(rest, ++i, '--base-url')
       continue
     }
 

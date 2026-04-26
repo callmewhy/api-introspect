@@ -11,7 +11,9 @@ async function main() {
   const headers = Object.keys(args.headers).length > 0 ? args.headers : undefined
 
   try {
-    const { introspection, baseUrl } = await loadSource(args.url, { headers })
+    const loaded = await loadSource(args.url, { headers })
+    const { introspection } = loaded
+    const baseUrl = args.baseUrl ?? loaded.baseUrl
 
     if (args.subcommand === 'list') {
       console.log(formatList(introspection))
