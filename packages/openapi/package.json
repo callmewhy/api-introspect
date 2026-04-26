@@ -1,13 +1,13 @@
 {
-  "name": "api-introspect",
+  "name": "@api-introspect/openapi",
   "type": "module",
   "version": "0.13.3",
-  "description": "CLI and HTTP client for discovering and calling API procedures via introspection.",
+  "description": "OpenAPI / Swagger spec to introspection. Convert third-party API specs into a unified EndpointInfo list.",
   "license": "MIT",
   "repository": {
     "type": "git",
     "url": "https://github.com/callmewhy/api-introspect.git",
-    "directory": "packages/cli"
+    "directory": "packages/openapi"
   },
   "sideEffects": false,
   "exports": {
@@ -25,9 +25,6 @@
   "main": "./dist/index.cjs",
   "module": "./dist/index.mjs",
   "types": "./dist/index.d.mts",
-  "bin": {
-    "api-introspect": "./dist/cli/index.mjs"
-  },
   "files": [
     "dist/**"
   ],
@@ -37,10 +34,6 @@
     "clean": "rm -rf dist"
   },
   "dependencies": {
-    "@api-introspect/core": "workspace:*",
-    "@api-introspect/openapi": "workspace:*"
-  },
-  "devDependencies": {
-    "@api-introspect/trpc": "workspace:*"
+    "@api-introspect/core": "workspace:*"
   }
 }

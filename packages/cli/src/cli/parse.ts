@@ -1,82 +1,107 @@
 import process from 'node:process'
 
-import type { ParsedArgs } from './types'
+export type Subcommand = 'list' | 'info' | 'call'
 
-const HELP = `Usage: api-introspect <base-url> [endpoint] [input]
+export interface ParsedArgs {
+  subcommand: Subcommand
+  url: string
+  path: string | undefined
+  method: string | undefined
+  input: string | undefined
+  headers: Record<string, string>
+}
 
-Discover and call API endpoints.
+const SUBCOMMANDS: Subcommand[] = ['list', 'info', 'call']
 
-IMPORTANT: Always run without [endpoint] first to discover all available endpoints. Do not guess endpoint names or request shapes -- use the introspection output to determine the correct values.
+export const HELP = `Usage: api-introspect <command> <url> [options]
+
+Discover and call API endpoints. Supports tRPC, Fastify, and OpenAPI / Swagger specs.
+
+Commands:
+  list <url>                                  List all endpoints (path + method + description)
+  info <url> --path <p> [--method M]          Show full schema for a single endpoint
+  call <url> --path <p> [--method M] [--input <json>]
+                                              Call an endpoint
 
 Arguments:
-  base-url    Base URL of the server (include path prefix if any)
-  endpoint    Endpoint to call (tRPC procedure e.g. user.getById, or route e.g. /user/:id)
-  input       JSON input (must match the endpoint's schema from introspection)
+  url    Introspection endpoint, base URL, or OpenAPI/Swagger spec URL.
+         The source is auto-detected (introspection envelope vs. OpenAPI document).
 
 Options:
-  -X, --method <METHOD>     HTTP method for disambiguating endpoints (e.g. POST)
-  -H, --header <key:value>  Custom header (repeatable)
-  --summary                 Force summary output format
-  --full                    Force full JSON output format
+  --path <p>                Endpoint path (tRPC: e.g. user.getById, HTTP: /users/{id})
+  --method <M>, -X <M>      HTTP method to disambiguate same-path endpoints
+  --input <json>            JSON input for "call"
+  --header <key:value>, -H  Custom header (repeatable)
   -h, --help                Show this help message
 
 Examples:
-  api-introspect <base-url>                                  List all endpoints
-  api-introspect <base-url> user.getById '{"id":1}'          Call a tRPC procedure
-  api-introspect <base-url> user.create '{"name":"Alice"}'   Call a tRPC mutation
-  api-introspect <base-url> -H "Authorization:Bearer token123"
-  api-introspect <base-url> -X POST /user '{"name":"Alice"}'   Call an HTTP endpoint`
-
-export { HELP }
+  api-introspect list http://localhost:3000
+  api-introspect list https://api.example.com/openapi.json
+  api-introspect info http://localhost:3000 --path user.getById
+  api-introspect info https://api.example.com/openapi.json --path /users/{id} --method GET
+  api-introspect call http://localhost:3000 --path user.create --input '{"name":"Alice"}'
+  api-introspect call http://localhost:3000 --path /users/{id} --method DELETE --input '{"id":1}'
+`
 
 export function parseArgs(argv: string[]): ParsedArgs {
-  const result: ParsedArgs = {
-    baseUrl: undefined,
-    procedure: undefined,
-    input: undefined,
-    headers: {},
-    format: undefined,
-    method: undefined,
+  if (argv[0] === '-h' || argv[0] === '--help') {
+    console.log(HELP)
+    process.exit(0)
   }
 
-  const positional: string[] = []
+  const subcommand = argv[0]
+  if (!subcommand || !SUBCOMMANDS.includes(subcommand as Subcommand)) {
+    console.error(subcommand
+      ? `Unknown command: ${subcommand}. Expected one of: ${SUBCOMMANDS.join(', ')}.`
+      : 'Missing command.')
+    console.error('')
+    console.error(HELP)
+    process.exit(1)
+  }
 
-  for (let i = 0; i < argv.length; i++) {
-    const arg = argv[i]
+  const rest = argv.slice(1)
+  const result: ParsedArgs = {
+    subcommand: subcommand as Subcommand,
+    url: '',
+    path: undefined,
+    method: undefined,
+    input: undefined,
+    headers: {},
+  }
+
+  let urlSeen = false
+
+  for (let i = 0; i < rest.length; i++) {
+    const arg = rest[i]
 
     if (arg === '-h' || arg === '--help') {
       console.log(HELP)
       process.exit(0)
     }
 
-    if (arg === '--summary') {
-      result.format = 'summary'
+    if (arg === '--path') {
+      result.path = takeValue(rest, ++i, '--path')
       continue
     }
 
-    if (arg === '--full') {
-      result.format = 'full'
+    if (arg === '--method' || arg === '-X') {
+      result.method = takeValue(rest, ++i, '--method').toUpperCase()
       continue
     }
 
-    if (arg === '-X' || arg === '--method') {
-      const value = argv[++i]
-      if (!value) {
-        console.error('Method requires a value.')
-        process.exit(1)
-      }
-      result.method = value.toUpperCase()
+    if (arg === '--input') {
+      result.input = takeValue(rest, ++i, '--input')
       continue
     }
 
-    if (arg === '-H' || arg === '--header') {
-      const value = argv[++i]
-      if (!value || !value.includes(':')) {
+    if (arg === '--header' || arg === '-H') {
+      const value = takeValue(rest, ++i, '--header')
+      if (!value.includes(':')) {
         console.error('Header must be in key:value format.')
         process.exit(1)
       }
-      const colonIdx = value.indexOf(':')
-      result.headers[value.slice(0, colonIdx).trim()] = value.slice(colonIdx + 1).trim()
+      const colon = value.indexOf(':')
+      result.headers[value.slice(0, colon).trim()] = value.slice(colon + 1).trim()
       continue
     }
 
@@ -85,12 +110,34 @@ export function parseArgs(argv: string[]): ParsedArgs {
       process.exit(1)
     }
 
-    positional.push(arg)
+    if (!urlSeen) {
+      result.url = arg
+      urlSeen = true
+      continue
+    }
+
+    console.error(`Unexpected argument: ${arg}`)
+    process.exit(1)
   }
 
-  result.baseUrl = positional[0]
-  result.procedure = positional[1]
-  result.input = positional[2]
+  if (!result.url) {
+    console.error(`"${subcommand}" requires a <url> argument.`)
+    process.exit(1)
+  }
+
+  if ((result.subcommand === 'info' || result.subcommand === 'call') && !result.path) {
+    console.error(`"${result.subcommand}" requires --path <endpoint>.`)
+    process.exit(1)
+  }
 
   return result
+}
+
+function takeValue(argv: string[], index: number, flag: string): string {
+  const value = argv[index]
+  if (value === undefined) {
+    console.error(`${flag} requires a value.`)
+    process.exit(1)
+  }
+  return value
 }

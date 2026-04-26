@@ -1,0 +1,7 @@
+{
+  "name": "@api-introspect/example-openapi",
+  "private": true,
+  "scripts": {
+    "dev": "tsx watch server.ts"
+  }
+}

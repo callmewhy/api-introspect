@@ -29,7 +29,8 @@ export interface CallProcedureOptions {
 
 const TRAILING_SLASHES = /\/+$/
 const LEADING_SLASHES = /^\/+/
-const PATH_PARAM_RE = /:([A-Z_]\w*)/gi
+// Matches both `:name` (Fastify-style) and `{name}` (OpenAPI-style) path params.
+const PATH_PARAM_RE = /:([A-Z_]\w*)|\{([A-Z_]\w*)\}/gi
 
 function joinUrl(baseUrl: string, path: string): string {
   const base = baseUrl.replace(TRAILING_SLASHES, '')
@@ -121,8 +122,9 @@ export async function callProcedure(
             keys.forEach(k => queryKeys.add(k))
         }
 
-        // Substitute path params
-        routePath = routePath.replace(PATH_PARAM_RE, (_match, param: string) => {
+        // Substitute path params (`:name` or `{name}`)
+        routePath = routePath.replace(PATH_PARAM_RE, (_match, colonName?: string, braceName?: string) => {
+          const param = colonName ?? braceName!
           paramKeys.add(param)
           return String(inputObj[param] ?? '')
         })

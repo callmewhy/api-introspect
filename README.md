@@ -9,12 +9,13 @@ Designed for AI agents to autonomously discover and learn how to use your API.
 
 ## Packages
 
-| Package                                         | Description                            |
-| ----------------------------------------------- | -------------------------------------- |
-| [`@api-introspect/core`](./packages/core)       | Framework-agnostic types and utilities |
-| [`@api-introspect/trpc`](./packages/trpc)       | tRPC router introspection              |
-| [`@api-introspect/fastify`](./packages/fastify) | Fastify route introspection            |
-| [`api-introspect`](./packages/cli)              | CLI and HTTP client                    |
+| Package                                         | Description                                      |
+| ----------------------------------------------- | ------------------------------------------------ |
+| [`@api-introspect/core`](./packages/core)       | Framework-agnostic types and utilities           |
+| [`@api-introspect/trpc`](./packages/trpc)       | tRPC router introspection                        |
+| [`@api-introspect/fastify`](./packages/fastify) | Fastify route introspection                      |
+| [`@api-introspect/openapi`](./packages/openapi) | OpenAPI / Swagger spec to introspection envelope |
+| [`api-introspect`](./packages/cli)              | CLI and HTTP client                              |
 
 ## Quick Start
 
@@ -46,15 +47,43 @@ await app.register(introspection, {
 })
 ```
 
-### Discover
+### OpenAPI / Swagger
+
+Already have an OpenAPI 3.x or Swagger 2.0 spec?
+Point the CLI at the spec URL — no SDK integration required.
+The spec is auto-detected and converted to the same introspection envelope as tRPC and Fastify.
 
 ```bash
-# List all endpoints
-npx api-introspect http://localhost:3000
+npx api-introspect list https://api.example.com/openapi.json
+```
+
+The `@api-introspect/openapi` package exposes the conversion as a function for programmatic use:
+
+```ts
+import { openAPIToIntrospection } from '@api-introspect/openapi'
+
+const introspection = openAPIToIntrospection(spec)
+```
+
+### Discover
+
+The CLI is subcommand-based.
+The `<url>` is auto-detected: introspection envelope (tRPC / Fastify) or OpenAPI document.
+
+```bash
+# List all endpoints (always collapsed: path + method/type + description)
+npx api-introspect list http://localhost:3000
+
+# Show full schema for a single endpoint
+npx api-introspect info http://localhost:3000 --path user.getById
+npx api-introspect info https://api.example.com/openapi.json --path /users/{id} --method GET
 
 # Call an endpoint
-npx api-introspect http://localhost:3000 user.getById '{"id":1}'
+npx api-introspect call http://localhost:3000 --path user.getById --input '{"id":1}'
+npx api-introspect call http://localhost:3000 --path /users/{id} --method DELETE --input '{"id":1}'
 ```
+
+When a path is reused across HTTP methods (e.g. `GET /users` and `POST /users`), pass `--method` to disambiguate.
 
 The introspection endpoint returns:
 
@@ -129,18 +158,18 @@ The introspection endpoint returns:
 ## Examples
 
 ```bash
-pnpm dev:trpc      # tRPC server on http://localhost:3000
-pnpm dev:fastify   # Fastify server on http://localhost:3001
+pnpm --filter @api-introspect/example-trpc dev      # tRPC server on http://localhost:3000
+pnpm --filter @api-introspect/example-fastify dev   # Fastify server on http://localhost:3001
+pnpm --filter @api-introspect/example-openapi dev   # OpenAPI server on http://localhost:3002
 ```
 
 - [examples/trpc](./examples/trpc) - tRPC server with queries, mutations, and auth middleware
 - [examples/fastify](./examples/fastify) - Fastify HTTP server with TypeBox schemas
+- [examples/openapi](./examples/openapi) - Plain Node `http` server publishing an OpenAPI 3.0 spec at `/openapi.json`
 
 ## Development
 
 ```bash
-pnpm dev:trpc    # run tRPC example in watch mode
-pnpm dev:fastify # run Fastify example in watch mode
 pnpm build       # build all packages
 pnpm test        # run all tests
 pnpm lint:fix    # lint
