@@ -177,6 +177,11 @@ pnpm lint:fix    # lint
 
 ## Changelog
 
+- 0.14.0: Add `@api-introspect/openapi` package that converts OpenAPI 3.x / Swagger 2.0 specs into the unified introspection envelope.
+  CLI restructured around subcommands `list`, `info`, and `call`, with explicit `--path`, `--method`, and `--input` flags (replacing positional procedure / input arguments and the `--summary` / `--full` toggles).
+  CLI auto-detects the `<url>` argument as either an introspection endpoint or an OpenAPI / Swagger spec.
+  CLI HTTP client now substitutes both `:name` and `{name}` style path parameters.
+  New `loadSource` export from `api-introspect` for programmatic source detection.
 - 0.13.3: Fastify introspection now normalizes `:param` path parameters to `{param}` format for consistency with OpenAPI conventions.
 - 0.13.2: `compactSchema` now preserves nullable object/array `anyOf` instead of flattening to `type: [X, "null"]` for better toolchain compatibility.
 - 0.13.1: Rename `InputLocation` value from `'params'` to `'path'` for consistency with OpenAPI conventions.
