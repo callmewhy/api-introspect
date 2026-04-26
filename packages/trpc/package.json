@@ -1,7 +1,7 @@
 {
   "name": "@api-introspect/trpc",
   "type": "module",
-  "version": "0.14.0",
+  "version": "0.15.0",
   "description": "tRPC router introspection. Discover procedures, input/output schemas as JSON Schema.",
   "license": "MIT",
   "repository": {

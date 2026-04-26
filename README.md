@@ -177,6 +177,7 @@ pnpm lint:fix    # lint
 
 ## Changelog
 
+- 0.15.0: CLI gains a `--base-url <url>` option that overrides the base URL used by `call`, useful when an OpenAPI spec is hosted apart from the API it describes.
 - 0.14.0: Add `@api-introspect/openapi` package that converts OpenAPI 3.x / Swagger 2.0 specs into the unified introspection envelope.
   CLI restructured around subcommands `list`, `info`, and `call`, with explicit `--path`, `--method`, and `--input` flags (replacing positional procedure / input arguments and the `--summary` / `--full` toggles).
   CLI auto-detects the `<url>` argument as either an introspection endpoint or an OpenAPI / Swagger spec.
