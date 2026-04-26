@@ -4,18 +4,25 @@ Integration test the CLI by starting all three example servers (tRPC, Fastify, O
 
 1. Build all packages (required for workspace imports to resolve), then ensure the example servers are running.
 
-   First check if anything is already bound to 3000 / 3001 / 3002 — a prior `/test` run may have left them up. If so, just probe and skip the start step:
+   First check if anything is already bound to 3000 / 3001 / 3002 — a prior `/test` run may have left them up.
+   If so, just probe and skip the start step:
+
    ```bash
    pnpm build
    for p in 3000 3001 3002; do lsof -ti:$p > /dev/null && echo ":$p already running" || echo ":$p free"; done
    ```
-   If a port is free, start that server (use the Bash tool's `run_in_background: true` — bare `&` from foreground commands won't survive). Start the matching server only:
+
+   If a port is free, start that server (use the Bash tool's `run_in_background: true` — bare `&` from foreground commands won't survive).
+   Start the matching server only:
+
    ```bash
    npx tsx examples/trpc/server.ts       # if :3000 free
    npx tsx examples/fastify/server.ts    # if :3001 free
    npx tsx examples/openapi/server.ts    # if :3002 free
    ```
+
    Then poll for readiness:
+
    ```bash
    for i in 1 2 3 4 5; do curl -s http://localhost:3000/_introspect > /dev/null && break; sleep 1; done
    for i in 1 2 3 4 5; do curl -s http://localhost:3001/_introspect > /dev/null && break; sleep 1; done
@@ -38,8 +45,6 @@ Integration test the CLI by starting all three example servers (tRPC, Fastify, O
 
    **Important:** When capturing CLI JSON output for parsing, always redirect to a temp file (`> /tmp/out.json`) and read it back with `node -e "...require('fs').readFileSync('/tmp/out.json')..."`.
    Do NOT use `$()` command substitution -- it strips backslashes, corrupting regex patterns in JSON Schema output.
-
-   **Shell gotcha:** the Bash tool runs zsh, which (unlike bash) does NOT word-split unquoted `$VAR` expansions. If you stash the CLI invocation in a variable like `CLI="npx tsx packages/cli/src/cli/index.ts"` and try `$CLI list ...`, zsh treats the whole value as one filename and fails with `no such file or directory`. Wrap parallel test batches in `bash -c '...'` to get bash word-splitting, or just inline the full command each time.
 
    Run each test category against **all three** servers (3000 = tRPC, 3001 = Fastify, 3002 = OpenAPI).
    Endpoint paths differ per server -- use the `list` output from step 2.
