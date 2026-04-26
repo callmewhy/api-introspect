@@ -6,6 +6,6 @@
   },
   "dependencies": {
     "@api-introspect/fastify": "workspace:*",
-    "fastify": "^5.8.5"
+    "fastify": "catalog:"
   }
 }

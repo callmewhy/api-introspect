@@ -27,7 +27,7 @@
     "@types/node": "^25.3.5",
     "eslint": "^9.39.4",
     "eslint-config-hyoban": "^7.0.3",
-    "fastify": "^5.8.5",
+    "fastify": "catalog:",
     "tsdown": "^0.21.0",
     "tsx": "^4.21.0",
     "turbo": "^2.8.20",
