@@ -29,6 +29,7 @@ export interface CallProcedureOptions {
 
 const TRAILING_SLASHES = /\/+$/
 const LEADING_SLASHES = /^\/+/
+const BODYLESS_HTTP_METHODS = new Set(['GET', 'HEAD'])
 // Matches both `:name` (Fastify-style) and `{name}` (OpenAPI-style) path params.
 const PATH_PARAM_RE = /:([A-Z_]\w*)|\{([A-Z_]\w*)\}/gi
 
@@ -104,11 +105,12 @@ export async function callProcedure(
       let routePath = procedure
       let query: Record<string, unknown> | undefined
       let body: Record<string, unknown> | undefined
+      const bodyFieldNames: string[] = []
+      const paramKeys = new Set<string>()
+      const queryKeys = new Set<string>()
 
       if (input && typeof input === 'object' && !Array.isArray(input)) {
         const inputObj = input as Record<string, unknown>
-        const paramKeys = new Set<string>()
-        const queryKeys = new Set<string>()
 
         // Use introspection input schemas to classify keys by location
         for (const schema of proc.input ?? []) {
@@ -140,8 +142,13 @@ export async function callProcedure(
           else {
             body ??= {}
             body[key] = value
+            bodyFieldNames.push(key)
           }
         }
+      }
+
+      if (body && BODYLESS_HTTP_METHODS.has(proc.method)) {
+        throw new Error(formatBodylessInputError(proc.method, procedure, bodyFieldNames, paramKeys, queryKeys))
       }
 
       let url = `${baseUrl.replace(TRAILING_SLASHES, '')}${routePath}`
@@ -200,6 +207,28 @@ export async function callProcedure(
 
 function resolveTransformer(serializer: Serializer): 'json' | 'superjson' {
   return serializer === 'superjson' ? 'superjson' : 'json'
+}
+
+function formatBodylessInputError(
+  method: string,
+  procedure: string,
+  bodyFieldNames: string[],
+  paramKeys: Set<string>,
+  queryKeys: Set<string>,
+): string {
+  const fields = formatQuotedList(bodyFieldNames)
+  const knownFields = formatKnownFields(paramKeys, queryKeys)
+  const singular = bodyFieldNames.length === 1
+  return `${method} ${procedure} cannot send a request body. Input field${singular ? '' : 's'} ${fields} ${singular ? 'is' : 'are'} not declared as path or query parameter${singular ? '' : 's'}.${knownFields}`
+}
+
+function formatQuotedList(values: string[]): string {
+  return values.map(value => `"${value}"`).join(', ')
+}
+
+function formatKnownFields(paramKeys: Set<string>, queryKeys: Set<string>): string {
+  const known = [...new Set([...paramKeys, ...queryKeys])].toSorted()
+  return known.length > 0 ? ` Known path/query fields: ${known.join(', ')}.` : ''
 }
 
 function encodeInput(input: unknown, transformer: 'json' | 'superjson' | TransformerLike): unknown {

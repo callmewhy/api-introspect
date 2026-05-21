@@ -1,8 +1,9 @@
 import type { Server } from 'node:http'
 
+import type { IntrospectionResult } from '@api-introspect/core'
 import { TRPCError } from '@trpc/server'
 import { createHTTPServer } from '@trpc/server/adapters/standalone'
-import { afterAll, beforeAll, describe, expect, it } from 'vitest'
+import { afterAll, afterEach, beforeAll, describe, expect, it, vi } from 'vitest'
 
 import type { Context } from '../../../examples/trpc/context'
 import { createContext } from '../../../examples/trpc/context'
@@ -16,6 +17,7 @@ let authServer: Server
 let authBaseUrl: string
 
 const AUTH_HEADERS = { Authorization: 'Bearer test-token' }
+const originalFetch = globalThis.fetch
 
 beforeAll(async () => {
   // Normal server: public queries, protected mutations
@@ -37,6 +39,11 @@ beforeAll(async () => {
   const authAddr = authServer.address()
   const authPort = typeof authAddr === 'object' && authAddr ? authAddr.port : 0
   authBaseUrl = `http://localhost:${authPort}`
+})
+
+afterEach(() => {
+  vi.restoreAllMocks()
+  globalThis.fetch = originalFetch
 })
 
 afterAll(() => {
@@ -88,7 +95,7 @@ describe('callProcedure', () => {
   })
 
   it('fails calling a protected mutation without auth', async () => {
-    expect(
+    await expect(
       callProcedure(baseUrl, 'user.create', {
         input: { name: 'Nobody', email: 'nobody@example.com' },
       }),
@@ -110,7 +117,7 @@ describe('callProcedure', () => {
   })
 
   it('throws on unknown procedure', async () => {
-    expect(
+    await expect(
       callProcedure(baseUrl, 'nonexistent'),
     ).rejects.toThrow('Procedure "nonexistent" not found')
   })
@@ -134,17 +141,89 @@ describe('callProcedure', () => {
   })
 
   it('fails without auth on auth-gated server', async () => {
-    expect(
+    await expect(
       callProcedure(authBaseUrl, 'user.list'),
     ).rejects.toThrow()
   })
 
   it('throws on invalid introspection response', async () => {
-    expect(
+    await expect(
       callProcedure(baseUrl, 'user.list', {
         // @ts-expect-error testing invalid introspection
         introspection: {},
       }),
     ).rejects.toThrow('Invalid introspection response: missing "endpoints" or "procedures" field')
+  })
+
+  it('calls HTTP GET endpoints with schema-declared query params and no body', async () => {
+    const introspection: IntrospectionResult = {
+      description: 'HTTP API',
+      serializer: 'json',
+      endpoints: [{
+        path: '/v1/traders/leaderboard',
+        type: 'http',
+        method: 'GET',
+        input: [{
+          in: 'query',
+          type: 'object',
+          properties: {
+            window_kind: { type: 'string' },
+            page: { type: 'integer' },
+          },
+        }],
+      }],
+    }
+    const fetchMock = vi.fn(async (url: string | URL | Request, init?: RequestInit) => {
+      expect(String(url)).toBe('http://api/v1/traders/leaderboard?window_kind=7d&page=2')
+      expect(init?.method).toBe('GET')
+      expect(init?.body).toBeUndefined()
+      return {
+        ok: true,
+        json: async () => ({ ok: true }),
+      } as Response
+    })
+    globalThis.fetch = fetchMock as unknown as typeof fetch
+
+    const result = await callProcedure('http://api', '/v1/traders/leaderboard', {
+      input: { window_kind: '7d', page: 2 },
+      introspection,
+    })
+
+    expect(result).toEqual({ ok: true })
+    expect(fetchMock).toHaveBeenCalledOnce()
+  })
+
+  it.each(['GET', 'HEAD'] as const)('rejects undeclared %s input fields instead of sending a body', async (method) => {
+    const introspection: IntrospectionResult = {
+      description: 'HTTP API',
+      serializer: 'json',
+      endpoints: [{
+        path: '/v1/traders/leaderboard',
+        type: 'http',
+        method,
+        input: [{
+          in: 'query',
+          type: 'object',
+          properties: {
+            window_kind: { type: 'string' },
+            page: { type: 'integer' },
+          },
+        }],
+      }],
+    }
+    const fetchMock = vi.fn(() => {
+      throw new Error('fetch should not be called')
+    })
+    globalThis.fetch = fetchMock as unknown as typeof fetch
+
+    await expect(
+      callProcedure('http://api', '/v1/traders/leaderboard', {
+        input: { window_kind: '7d', limit: 3 },
+        introspection,
+      }),
+    ).rejects.toThrow(
+      `${method} /v1/traders/leaderboard cannot send a request body. Input field "limit" is not declared as path or query parameter. Known path/query fields: page, window_kind.`,
+    )
+    expect(fetchMock).not.toHaveBeenCalled()
   })
 })
